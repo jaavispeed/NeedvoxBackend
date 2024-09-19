@@ -14,7 +14,9 @@ export class User {
     @Column('text')
     username: string;
 
-    @Column('text')
+    @Column('text',{
+        select: false
+    })
     password: string;
 
     @Column('bool',{
