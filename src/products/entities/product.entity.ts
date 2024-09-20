@@ -1,4 +1,5 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/auth/entities/user.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Product {
@@ -25,6 +26,14 @@ export class Product {
         unique: true
     })
     slug: string;
+
+
+    @ManyToOne(
+        () => User,
+        (user) => user.product,
+        {eager: true}
+    )
+    user:User
 
 
     @BeforeInsert()

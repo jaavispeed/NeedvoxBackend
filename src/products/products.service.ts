@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { PaginationDto } from '../common/dtos/pagination.dto';
 import { validate as isUUID} from 'uuid';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -17,10 +18,14 @@ export class ProductsService {
     private readonly productRepository: Repository<Product>,
   ){}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     
     try{
-      const product = this.productRepository.create(createProductDto);
+      const product = this.productRepository.create({
+        ...createProductDto, user
+      });
+      
+      
       await this.productRepository.save(product);
 
       return product;
@@ -60,7 +65,7 @@ export class ProductsService {
     return product
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto, user:User) {
 
     const product = await this.productRepository.preload({
       id: id,
@@ -70,6 +75,9 @@ export class ProductsService {
     if(!product) throw new NotFoundException(`Product with id: ${id } not found`);
 
     try{
+
+      product.user = user;
+
       await this.productRepository.save(product);
       return product;
     }catch (error){
