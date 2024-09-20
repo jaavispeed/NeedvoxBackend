@@ -8,6 +8,7 @@ import { User } from './entities/user.entity';
 import { UserRoleGuard } from './guards/user-role/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces';
+import { Auth } from './decorators';
 
 
 @Controller('auth')
@@ -24,19 +25,23 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
   
-
-  
-  //@SetMetadata('roles', ['admin','super-user'])
   @Get('private')
-  @RoleProtected(ValidRoles.admin)
-  @UseGuards(AuthGuard(),UserRoleGuard)
-  testingPrivateRoute(
-    //@Req() request: Express.Request
+  @Auth()
+  PrivateRoute(
     @GetUser() user:User
   ){
+    return{
+      ok: true,
+      message: 'Hola mundo private',
+      user,
+    }
+  }
 
-    //console.log({user: request.user});
-
+  @Get('private2')
+  @Auth(ValidRoles.admin)
+  PrivateRoute2(
+    @GetUser() user:User
+  ){
     return{
       ok: true,
       message: 'Hola mundo private',
