@@ -4,8 +4,13 @@
 
 
 
-# Needvox API
+# Needvox
+
 
 # PASOS
-1. Docker-compose up -d
-2. nest start
+1. npm install
+# Levantar BD
+1. docker compose up -d
+2. docker compose down
+# Levantar nest
+1. npm run start:dev 
