@@ -3,55 +3,56 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, PrimaryGenerated
 
 @Entity()
 export class Product {
-
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column('text',{
-        unique: true
+    @Column('text', {
+        unique: true,
     })
     title: string;
 
     @Column('numeric', {
-        default: 0
+        default: 0,
     })
-    price: number;
+    compraPrice: number; // Cambiado a compraPrice para alinearlo con la interfaz
 
-    @Column('int',{
-        default:0 
+    @Column('numeric', {
+        default: 0,
+    })
+    ventaPrice: number; // Añadido para manejar el precio de venta
+
+    @Column('int', {
+        default: 0,
     })
     stock: number;
 
-    @Column('text',{
-        unique: true
+    @Column('text', {
+        unique: true,
     })
     slug: string;
 
+    @ManyToOne(() => User, (user) => user.product, { eager: true })
+    user: User;
 
-    @ManyToOne(
-        () => User,
-        (user) => user.product,
-        {eager: true}
-    )
-    user:User
-
+    @Column('date', { nullable: true }) // Añadido para manejar la fecha de vencimiento
+    expiryDate?: string;
 
     @BeforeInsert()
-    checkSlugInster(){
-        if(!this.slug){
-        this.slug = this.title;
+    checkSlugInsert() {
+        if (!this.slug) {
+            this.slug = this.title; // Usa el título para generar el slug por defecto
         }
         this.slug = this.slug
-        .toLowerCase()
-        .replaceAll(' ','_')
-        .replaceAll("'",'_')
+            .toLowerCase()
+            .replaceAll(' ', '_')
+            .replaceAll("'", '_');
     }
 
     @BeforeUpdate()
-    checkSlugUpdate(){
+    checkSlugUpdate() {
         this.slug = this.slug
-        .toLowerCase()
-        .replaceAll(' ','_')
-        .replaceAll("'",'_')
+            .toLowerCase()
+            .replaceAll(' ', '_')
+            .replaceAll("'", '_');
     }
 }

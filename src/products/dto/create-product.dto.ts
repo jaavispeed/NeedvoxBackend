@@ -1,7 +1,6 @@
-import { IsInt, IsNumber, IsOptional, IsPositive, IsString, Min, MinLength } from "class-validator";
+import { IsInt, IsNumber, IsOptional, IsPositive, IsString, Min, MinLength, IsDateString } from "class-validator";
 
 export class CreateProductDto {
-
     @IsString()
     @MinLength(1)
     title: string;
@@ -9,7 +8,12 @@ export class CreateProductDto {
     @IsNumber()
     @IsOptional()
     @Min(0)
-    price?: number;
+    compraPrice?: number;
+
+    @IsNumber()
+    @IsOptional()
+    @Min(0)
+    ventaPrice?: number;
 
     @IsString()
     @IsOptional()
@@ -20,4 +24,7 @@ export class CreateProductDto {
     @Min(0)
     stock?: number;
 
+    @IsDateString()
+    @IsOptional()
+    expiryDate?: string; // Añadido como opcional
 }
