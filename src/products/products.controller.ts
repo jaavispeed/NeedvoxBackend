@@ -12,23 +12,24 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  create
-  (@Body() createProductDto: CreateProductDto,
-  @GetUser() user: User,) 
-  {
-    return this.productsService.create(createProductDto, user );
+  create(
+    @Body() createProductDto: CreateProductDto,
+    @GetUser() user: User
+  ) {
+    return this.productsService.create(createProductDto, user);
   }
 
+
   @Get()
-  findAll(@Query() paginationDto:PaginationDto) 
+  findAll(@Query() paginationDto:PaginationDto, @GetUser() user: User) 
   {
-    return this.productsService.findAll(paginationDto);
+    return this.productsService.findAll(paginationDto, user);
   }
 
   @Get(':term')
-  findOne(@Param('term') term: string) 
+  findOne(@Param('term') term: string, @GetUser() user:User) 
   {
-    return this.productsService.findOne(term);
+    return this.productsService.findOne(term, user);
   }
 
   @Patch(':id')
@@ -41,8 +42,8 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) 
-  {
-    return this.productsService.remove(id);
-  }
+remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
+  return this.productsService.remove(id, user); // Pasar el usuario al servicio
+}
+
 }

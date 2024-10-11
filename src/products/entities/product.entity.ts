@@ -7,7 +7,6 @@ export class Product {
     id: string;
 
     @Column('text', {
-        unique: true,
     })
     title: string;
 
@@ -27,7 +26,6 @@ export class Product {
     stock: number;
 
     @Column('text', {
-        unique: true,
     })
     slug: string;
 
