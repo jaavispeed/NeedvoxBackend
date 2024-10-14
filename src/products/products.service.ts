@@ -25,49 +25,45 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto, user: User) {
     try {
-      // Asegurarse de que el barcode es null si está vacío
-      const barcode = createProductDto.barcode?.trim() === '' ? null : createProductDto.barcode;
-
-      // Verificar si ya existe un producto con el mismo nombre para el mismo usuario
-      const existingProductWithTitle = await this.productRepository.findOne({
-        where: { title: createProductDto.title, user: { id: user.id } },
-      });
-
+      const barcode = createProductDto.barcode?.trim() === '' || createProductDto.barcode === 'Sin código de barras' ? null : createProductDto.barcode;
+  
+      // Verificar si ya existe un producto con el mismo nombre
+      const existingProductWithTitle = await this.findByName(createProductDto.title, user);
       if (existingProductWithTitle) {
-        throw new BadRequestException(`Nombre ya creado: "${createProductDto.title}".`);
+        throw new BadRequestException('Nombre ya creado.');
       }
-
-      // Verificar si ya existe un producto con el mismo código de barras (si no es null) para el mismo usuario
+  
+      // Verificar si ya existe un producto con el mismo código de barras
       if (barcode) {
-        const existingProductWithBarcode = await this.productRepository.findOne({
-          where: { barcode: barcode, user: { id: user.id } },
-        });
-
+        const existingProductWithBarcode = await this.findByBarcode(barcode);
         if (existingProductWithBarcode) {
-          throw new BadRequestException(`Código de barras ya creado: "${barcode}".`);
+          throw new BadRequestException('Código de barras ya creado.');
         }
       }
-
-      // Crear el producto si no hay duplicados
+  
       const product = this.productRepository.create({
         ...createProductDto,
-        barcode, // Asignar barcode como null si está vacío
-        user, // Asignar el usuario
+        barcode,
+        user,
       });
-
+  
       await this.productRepository.save(product);
       return product;
     } catch (error) {
-      this.handleDBExceptions(error);
+      // Si el error es un BadRequestException, lo lanzamos de nuevo para que el cliente lo maneje
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.handleDBExceptions(error); // Manejamos otros errores
     }
   }
+  
 
   findAll(paginationDto: PaginationDto, user: User) {
     const { limit = 10, offset = 0 } = paginationDto;
 
-    // Filtrar los productos solo por el usuario autenticado
     return this.productRepository.find({
-      where: { user }, // Agregar la condición para que solo se obtengan los productos del usuario
+      where: { user },
       take: limit,
       skip: offset,
     });
@@ -84,53 +80,46 @@ export class ProductsService {
         .where('UPPER(title) = :title OR slug = :slug OR barcode = :barcode', {
           title: term.toUpperCase(),
           slug: term.toLowerCase(),
-          barcode: term, // Para permitir búsqueda por barcode
+          barcode: term,
         })
-        .andWhere('user.id = :userId', { userId: user.id }) // Asegurarse que el producto pertenece al usuario
+        .andWhere('user.id = :userId', { userId: user.id })
         .getOne();
     }
 
     if (!product) {
-      throw new NotFoundException(`Product with term ${term} not found`);
+      throw new NotFoundException(`Producto con el término ${term} no encontrado.`);
     }
 
     return product;
   }
 
   async update(id: string, updateProductDto: UpdateProductDto, user: User) {
-    // Asegurarse de que el barcode es null si está vacío
-    const barcode = updateProductDto.barcode?.trim() === '' ? null : updateProductDto.barcode;
+    const barcode = updateProductDto.barcode?.trim() === '' || updateProductDto.barcode === 'Sin código de barras' ? null : updateProductDto.barcode;
 
     const product = await this.productRepository.preload({
       id: id,
       ...updateProductDto,
-      barcode, // Asignar barcode como null si está vacío
+      barcode,
     });
 
-    if (!product) throw new NotFoundException(`Producto con id: ${id} no encontrado`);
+    if (!product) throw new NotFoundException(`Producto con id: ${id} no encontrado.`);
 
-    // Verificar si otro producto del mismo usuario ya tiene ese nombre
-    const existingProductWithTitle = await this.productRepository.findOne({
-      where: { title: updateProductDto.title, user: { id: user.id } },
-    });
-
+    // Validar si existe un producto con el mismo nombre
+    const existingProductWithTitle = await this.findByName(updateProductDto.title, user);
     if (existingProductWithTitle && existingProductWithTitle.id !== id) {
-      throw new BadRequestException(`Nombre ya creado: "${updateProductDto.title}".`);
+      throw new BadRequestException('Nombre ya creado.');
     }
 
-    // Verificar si otro producto del mismo usuario ya tiene ese código de barras (si no es null)
+    // Validar si existe un producto con el mismo código de barras
     if (barcode) {
-      const existingProductWithBarcode = await this.productRepository.findOne({
-        where: { barcode: barcode, user: { id: user.id } },
-      });
-
+      const existingProductWithBarcode = await this.findByBarcode(barcode);
       if (existingProductWithBarcode && existingProductWithBarcode.id !== id) {
-        throw new BadRequestException(`Código de barras ya creado: "${barcode}".`);
+        throw new BadRequestException('Código de barras ya creado.');
       }
     }
 
     try {
-      product.user = user; // Actualizar el usuario
+      product.user = user;
       await this.productRepository.save(product);
       return product;
     } catch (error) {
@@ -139,12 +128,12 @@ export class ProductsService {
   }
 
   async remove(id: string, user: User) {
-    const product = await this.findOne(id, user); // Pasar el usuario al método findOne
+    const product = await this.findOne(id, user);
     await this.productRepository.remove(product);
   }
 
   private handleDBExceptions(error: any) {
-    if (error.code === '23505') {
+    if (error.code === '23505') { // Código de error para violaciones de unicidad en PostgreSQL
       throw new BadRequestException(error.detail);
     }
 
@@ -154,5 +143,9 @@ export class ProductsService {
 
   async findByBarcode(barcode: string) {
     return await this.productRepository.findOne({ where: { barcode } });
+  }
+
+  async findByName(title: string, user: User) {
+    return await this.productRepository.findOne({ where: { title, user: { id: user.id } } });
   }
 }
