@@ -25,4 +25,8 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
     @IsDateString()
     @IsOptional()
     expiryDate?: string | null; // Añadido como opcional
+
+    @IsString()
+    @IsOptional()
+    barcode?: string;
 }

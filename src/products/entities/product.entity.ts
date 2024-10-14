@@ -35,6 +35,10 @@ export class Product {
     @Column('date', { nullable: true })
     expiryDate?: string;
 
+    @Column('text', { nullable: true })
+    barcode?: string; // Esto es opcional
+
+
     @BeforeInsert()
     checkSlugInsert() {
         this.generateSlug();  // Llama a la función para generar el slug
