@@ -146,6 +146,13 @@ export class ProductsService {
   }
 
   async findByName(title: string, user: User) {
-    return await this.productRepository.findOne({ where: { title, user: { id: user.id } } });
+    const lowerTitle = title.toLowerCase();
+    
+    return await this.productRepository
+      .createQueryBuilder('product')
+      .where('LOWER(product.title) = :title', { title: lowerTitle })
+      .andWhere('product.user.id = :userId', { userId: user.id })
+      .getOne();
   }
+  
 }
