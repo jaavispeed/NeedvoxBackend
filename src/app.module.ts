@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './products/products.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
+import { VentasModule } from './ventas/ventas.module';
 
 
 @Module({
@@ -26,6 +27,8 @@ import { AuthModule } from './auth/auth.module';
     CommonModule,
 
     AuthModule,
+
+    VentasModule,
   ],
 
 })
