@@ -154,7 +154,4 @@ export class ProductsService {
       .andWhere('product.user.id = :userId', { userId: user.id })
       .getOne();
   }
-
-  
-  
 }

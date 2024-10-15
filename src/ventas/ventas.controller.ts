@@ -42,6 +42,12 @@ export class VentasController {
       return await this.ventasService.findByDate(date, user);
   }
   
+  @Auth()
+  @Get()
+  async findAll(@Request() req): Promise<Venta[]> {
+    const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
+    return await this.ventasService.findAll(user);
+  }
 
   
 }
