@@ -127,6 +127,29 @@ export class VentasService {
         }
     }
     
+    async remove(id: string, user: User): Promise<void> {
+        // Buscar la venta por ID
+        const venta = await this.ventaRepository.findOne({ where: { id }, relations: ['user', 'product'] });
+    
+        if (!venta) {
+            throw new NotFoundException(`Venta con id ${id} no encontrada.`);
+        }
+    
+        // Verificar que el usuario que intenta eliminar la venta es el propietario
+        if (venta.user.id !== user.id) {
+            throw new BadRequestException('No puedes eliminar esta venta porque no eres el propietario.');
+        }
+    
+        // Ajustar el stock del producto
+        const product = await this.productRepository.findOne({ where: { id: venta.product.id } });
+        if (product) {
+            product.stock += venta.cantidad; // Aumentar el stock según la cantidad vendida
+            await this.productRepository.save(product); // Guardar el producto con el stock actualizado
+        }
+    
+        // Eliminar la venta
+        await this.ventaRepository.remove(venta);
+    }
 
     async findAll(user: User): Promise<Venta[]> {
         return await this.ventaRepository.find({ where: { user } });
