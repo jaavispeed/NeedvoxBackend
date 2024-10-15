@@ -7,19 +7,18 @@ export class Product {
     id: string;
 
     @Column('text', {
-        unique: true,
     })
     title: string;
 
     @Column('numeric', {
         default: 0,
     })
-    compraPrice: number; // Cambiado a compraPrice para alinearlo con la interfaz
+    compraPrice: number;
 
     @Column('numeric', {
         default: 0,
     })
-    ventaPrice: number; // Añadido para manejar el precio de venta
+    ventaPrice: number;
 
     @Column('int', {
         default: 0,
@@ -27,30 +26,31 @@ export class Product {
     stock: number;
 
     @Column('text', {
-        unique: true,
     })
     slug: string;
 
     @ManyToOne(() => User, (user) => user.product, { eager: true })
     user: User;
 
-    @Column('date', { nullable: true }) // Añadido para manejar la fecha de vencimiento
+    @Column('date', { nullable: true })
     expiryDate?: string;
+
+    @Column('text', { nullable: true })
+    barcode?: string; // Esto es opcional
+
 
     @BeforeInsert()
     checkSlugInsert() {
-        if (!this.slug) {
-            this.slug = this.title; // Usa el título para generar el slug por defecto
-        }
-        this.slug = this.slug
-            .toLowerCase()
-            .replaceAll(' ', '_')
-            .replaceAll("'", '_');
+        this.generateSlug();  // Llama a la función para generar el slug
     }
 
     @BeforeUpdate()
     checkSlugUpdate() {
-        this.slug = this.slug
+        this.generateSlug();  // Llama a la función para generar el slug al actualizar
+    }
+
+    private generateSlug() {
+        this.slug = this.title
             .toLowerCase()
             .replaceAll(' ', '_')
             .replaceAll("'", '_');

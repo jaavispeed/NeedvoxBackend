@@ -27,4 +27,8 @@ export class CreateProductDto {
     @IsDateString()
     @IsOptional()
     expiryDate?: string; // Añadido como opcional
+
+    @IsString()
+    @IsOptional()
+    barcode?: string;
 }
