@@ -154,4 +154,21 @@ export class VentasService {
     async findAll(user: User): Promise<Venta[]> {
         return await this.ventaRepository.find({ where: { user } });
     }
+
+    async findByDate(date: string, user: User) {
+        const startDate = new Date(date);
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() + 1); // Asegúrate de incluir todo el día
+    
+        return await this.ventaRepository
+            .createQueryBuilder('venta')
+            .where('fecha >= :startDate AND fecha < :endDate', {
+                startDate,
+                endDate,
+            })
+            .andWhere('venta.user.id = :userId', { userId: user.id })
+            .getMany();
+    }
+    
+    
 }

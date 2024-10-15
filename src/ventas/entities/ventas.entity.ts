@@ -18,8 +18,7 @@ export class Venta {
     ventaPrice: number;
   
     @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP' })
-    hora: Date;
-
+    fecha: Date;
 
     @ManyToOne(() => Product, (product) => product.id)
     product: Product;

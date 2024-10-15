@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards, Request, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Request, Patch, Param, Delete, Get, Query } from '@nestjs/common';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { VentasService } from './ventas.service';
 import { Auth } from 'src/auth/decorators'; // Asegúrate de que este decorador esté correctamente implementado
@@ -34,5 +34,14 @@ export class VentasController {
     const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
     return this.ventasService.remove(id, user);
   }
+
+  @Auth()
+  @Get('fecha/:date')
+  async findByDate(@Param('date') date: string, @Request() req) {
+      const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
+      return await this.ventasService.findByDate(date, user);
+  }
+  
+
   
 }
