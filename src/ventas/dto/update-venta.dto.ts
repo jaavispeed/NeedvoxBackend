@@ -1,17 +1,21 @@
-import { IsInt, IsOptional, IsPositive, IsNumber, IsUUID } from 'class-validator';
+import { IsInt, IsOptional, IsPositive, IsUUID } from 'class-validator';
+
+export class UpdateProductVentaDto {
+    @IsOptional()
+    @IsUUID()
+    productId?: string;
+
+    @IsOptional()
+    @IsInt()
+    @IsPositive()
+    cantidad?: number;
+
+    @IsOptional()
+    @IsPositive()
+    ventaPrice?: number; // Este es el precio unitario durante la venta
+}
 
 export class UpdateVentaDto {
-  @IsOptional()
-  @IsUUID()
-  productId?: string;
-
-  @IsOptional()
-  @IsInt()
-  @IsPositive()
-  cantidad?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @IsPositive()
-  ventaPrice?: number;
+    @IsOptional()
+    productos?: UpdateProductVentaDto[];
 }

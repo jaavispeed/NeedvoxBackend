@@ -1,4 +1,15 @@
-import { Body, Controller, Post, UseGuards, Request, Patch, Param, Delete, Get, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Request,
+  Patch,
+  Param,
+  Delete,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { VentasService } from './ventas.service';
 import { Auth } from 'src/auth/decorators'; // Asegúrate de que este decorador esté correctamente implementado
@@ -13,8 +24,8 @@ export class VentasController {
   @Auth() // Aplica el guardia de autenticación
   @Post()
   async create(@Body() createVentaDto: CreateVentaDto, @Request() req) {
-    const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
-    return this.ventasService.create(createVentaDto, user);
+      const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
+      return this.ventasService.create(createVentaDto, user);
   }
 
   @Auth() // Aplica el guardia de autenticación
@@ -23,16 +34,16 @@ export class VentasController {
       @Param('id') id: string,
       @Body() updateVentaDto: UpdateVentaDto,
       @Request() req // Accede al objeto de solicitud
-  ): Promise<{ venta: Venta; stock: number }> {
+  ): Promise<{ venta: Venta }> {
       const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
-      return await this.ventasService.update(id, updateVentaDto, user);
+      return this.ventasService.update(id, updateVentaDto, user);
   }
 
   @Auth()
   @Delete(':id') // Agrega este método para eliminar una venta
   async remove(@Param('id') id: string, @Request() req): Promise<void> {
-    const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
-    return this.ventasService.remove(id, user);
+      const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
+      return this.ventasService.remove(id, user);
   }
 
   @Auth()
@@ -41,13 +52,11 @@ export class VentasController {
       const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
       return await this.ventasService.findByDate(date, user);
   }
-  
+
   @Auth()
   @Get()
   async findAll(@Request() req): Promise<Venta[]> {
-    const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
-    return await this.ventasService.findAll(user);
+      const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
+      return await this.ventasService.findAll(user);
   }
-
-  
 }

@@ -1,22 +1,20 @@
-import { 
-    BadRequestException, 
-    Injectable, 
-    InternalServerErrorException, 
-    Logger, 
-    NotFoundException 
+import {
+    Injectable,
+    NotFoundException,
+    BadRequestException,
+    InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Venta } from './entities/ventas.entity';
 import { Repository } from 'typeorm';
-import { Product } from 'src/products/entities/product.entity';
-import { User } from 'src/auth/entities/user.entity';
+import { ProductVenta, Venta } from './entities/ventas.entity';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
+import { Product } from 'src/products/entities/product.entity';
+import { User } from 'src/auth/entities/user.entity';
+
 
 @Injectable()
 export class VentasService {
-    private readonly logger = new Logger('VentasService');
-
     constructor(
         @InjectRepository(Venta)
         private readonly ventaRepository: Repository<Venta>,
@@ -24,48 +22,66 @@ export class VentasService {
         private readonly productRepository: Repository<Product>,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        @InjectRepository(ProductVenta)
+        private readonly productVentaRepository: Repository<ProductVenta>,
     ) {}
 
-    async create(createVentaDto: CreateVentaDto, user: User) {
-        const { productId, cantidad, ventaPrice } = createVentaDto;
-
-        const product = await this.productRepository.findOne({ where: { id: productId } });
-        if (!product) {
-            throw new NotFoundException(`Producto con id ${productId} no encontrado.`);
-        }
-
-        if (product.stock < cantidad) {
-            throw new BadRequestException(`Stock insuficiente para el producto ${product.title}.`);
-        }
-
-        const venta = this.ventaRepository.create({
-            product,
+    async create(createVentaDto: CreateVentaDto, user: User): Promise<Venta> {
+        // Primero, creamos y guardamos la venta para generar el id
+        const venta = await this.ventaRepository.save({
             user,
-            cantidad,
-            ventaPrice,
+            cantidadTotal: 0,
+            total: 0,
+            fecha: new Date(),
         });
-
+    
+        const productosVenta: ProductVenta[] = [];
+    
         try {
+            for (const prod of createVentaDto.productos) {
+                const product = await this.productRepository.findOne({ where: { id: prod.productId } });
+                if (!product) {
+                    throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
+                }
+    
+                const productVenta = this.productVentaRepository.create({
+                    product,
+                    cantidad: prod.cantidad,
+                    ventaPrice: prod.ventaPrice,
+                    venta: venta, // Asignamos la relación con la venta que ya tiene id
+                });
+    
+                productosVenta.push(productVenta);
+                venta.total += prod.ventaPrice * prod.cantidad;
+                venta.cantidadTotal += prod.cantidad;
+            }
+    
+            venta.productos = productosVenta;
+    
+            // Guardamos los productos de la venta
+            await this.productVentaRepository.save(productosVenta);
+    
+            // Actualizamos la venta con el total y la cantidad total de productos
             await this.ventaRepository.save(venta);
-            product.stock -= cantidad; // Actualizar stock
-            await this.productRepository.save(product);
+    
             return venta;
         } catch (error) {
-            this.handleDBExceptions(error);
+            console.error('Error al crear la venta:', error);
+            throw new InternalServerErrorException(`Error al crear la venta: ${error.message}`);
         }
     }
+    
+    
+    
+    
+    
 
-    private handleDBExceptions(error: any) {
-        this.logger.error(error);
-        throw new InternalServerErrorException('Error inesperado, revisa los logs del servidor');
-    }
-
-    async update(id: string, updateVentaDto: UpdateVentaDto, user: User): Promise<{ venta: Venta; stock: number }> {
+    async update(id: string, updateVentaDto: UpdateVentaDto, user: User): Promise<{ venta: Venta }> {
         // Buscar la venta por ID junto con las relaciones necesarias
-        const venta = await this.ventaRepository.findOne({ where: { id }, relations: ['user', 'product'] });
+        const venta = await this.ventaRepository.findOne({ where: { id }, relations: ['user', 'productos', 'productos.product'] });
     
         if (!venta) {
-            throw new NotFoundException(`Venta con id ${id} no encontrada.`);
+            throw new NotFoundException(`Venta con ID ${id} no encontrada.`);
         }
     
         // Verificar que el usuario que intenta actualizar la venta es el propietario
@@ -73,102 +89,80 @@ export class VentasService {
             throw new BadRequestException('No puedes actualizar esta venta porque no eres el propietario.');
         }
     
-        // Obtener el producto relacionado con la venta
-        const product = await this.productRepository.findOne({ where: { id: venta.product.id } });
-        if (!product) {
-            throw new NotFoundException(`Producto con id ${venta.product.id} no encontrado.`);
-        }
+        // Actualizar los productos y calcular el nuevo total
+        let total = 0;
+        const productosVenta: ProductVenta[] = [];
     
-        // Guardar la cantidad anterior
-        const cantidadAnterior = venta.cantidad;
-    
-        // Actualizar los campos solo si se proporcionan en el DTO
-        if (updateVentaDto.productId) {
-            const newProduct = await this.productRepository.findOne({ where: { id: updateVentaDto.productId } });
-            if (!newProduct) {
-                throw new NotFoundException(`Producto con id ${updateVentaDto.productId} no encontrado.`);
-            }
-            venta.product = newProduct; // Asignar el nuevo producto
-        }
-    
-        if (updateVentaDto.cantidad !== undefined) {
-            const nuevaCantidad = updateVentaDto.cantidad;
-    
-            // Ajustar el stock del producto
-            if (nuevaCantidad < cantidadAnterior) {
-                // Si la nueva cantidad es menor, aumentamos el stock
-                product.stock += (cantidadAnterior - nuevaCantidad);
-            } else if (nuevaCantidad > cantidadAnterior) {
-                // Si la nueva cantidad es mayor, verificamos si hay suficiente stock
-                const cantidadRequerida = nuevaCantidad - cantidadAnterior;
-                if (product.stock < cantidadRequerida) {
-                    throw new BadRequestException(`Stock insuficiente para el producto ${product.title}.`);
-                }
-                product.stock -= cantidadRequerida; // Disminuimos el stock
+        for (const prod of updateVentaDto.productos) {
+            const product = await this.productRepository.findOne({ where: { id: prod.productId } }); // Cambiado a un objeto
+            if (!product) {
+                throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
             }
     
-            venta.cantidad = nuevaCantidad; // Actualizar la cantidad de la venta
+            const productVenta = this.productVentaRepository.create({
+                product,
+                cantidad: prod.cantidad,
+                ventaPrice: prod.ventaPrice,
+            });
+    
+            productosVenta.push(productVenta);
+            total += prod.ventaPrice * prod.cantidad; // Sumar al total
         }
     
-        if (updateVentaDto.ventaPrice !== undefined) {
-            venta.ventaPrice = updateVentaDto.ventaPrice; // Actualizar el precio de venta
-        }
+        venta.total = total; // Actualizar el total
+        venta.cantidadTotal = productosVenta.reduce((sum, item) => sum + item.cantidad, 0); // Sumar las cantidades de productos
     
-        try {
-            // Guardar la venta actualizada y el producto
-            const updatedVenta = await this.ventaRepository.save(venta);
-            await this.productRepository.save(product); // Asegurarse de guardar el producto con el stock actualizado
+        venta.productos = productosVenta; // Asignar los productos a la venta
     
-            const stock = product.stock; // Obtener el stock actualizado
+        // Guardar la venta actualizada
+        await this.ventaRepository.save(venta);
+        await this.productVentaRepository.save(productosVenta); // Guardar cada relación en product_venta
     
-            return { venta: updatedVenta, stock }; // Devolver la venta actualizada y el stock
-        } catch (error) {
-            this.handleDBExceptions(error);
-        }
+        return { venta }; // Retornar la venta actualizada
     }
     
+
     async remove(id: string, user: User): Promise<void> {
-        // Buscar la venta por ID
-        const venta = await this.ventaRepository.findOne({ where: { id }, relations: ['user', 'product'] });
-    
+        const venta = await this.ventaRepository.findOne({ where: { id }, relations: ['user'] });
+
         if (!venta) {
             throw new NotFoundException(`Venta con id ${id} no encontrada.`);
         }
-    
+
         // Verificar que el usuario que intenta eliminar la venta es el propietario
         if (venta.user.id !== user.id) {
             throw new BadRequestException('No puedes eliminar esta venta porque no eres el propietario.');
         }
-    
-        // Ajustar el stock del producto
-        const product = await this.productRepository.findOne({ where: { id: venta.product.id } });
-        if (product) {
-            product.stock += venta.cantidad; // Aumentar el stock según la cantidad vendida
-            await this.productRepository.save(product); // Guardar el producto con el stock actualizado
-        }
-    
-        // Eliminar la venta
+
         await this.ventaRepository.remove(venta);
     }
 
+    async findByDate(date: string, user: User): Promise<Venta[]> {
+        const fechaBuscada = new Date(date); // Convierte la cadena a Date
+    
+        if (isNaN(fechaBuscada.getTime())) {
+            throw new BadRequestException('La fecha proporcionada no es válida.');
+        }
+    
+        return this.ventaRepository.find({
+            where: {
+                fecha: fechaBuscada, // Usa el objeto Date aquí
+                user: { id: user.id }, // Relación con el usuario
+            },
+            relations: ['productos', 'productos.product'], // Incluir las relaciones necesarias
+        });
+    }
+    
+
     async findAll(user: User): Promise<Venta[]> {
-        return await this.ventaRepository.find({ where: { user } });
+        return await this.ventaRepository.find({
+            where: { user },
+            relations: ['productos', 'productos.product'],
+        });
     }
 
-    async findByDate(date: string, user: User) {
-        const startDate = new Date(date);
-        const endDate = new Date(date);
-        endDate.setDate(endDate.getDate() + 1); // Asegúrate de incluir todo el día
-    
-        return await this.ventaRepository
-            .createQueryBuilder('venta')
-            .where('fecha >= :startDate AND fecha < :endDate', {
-                startDate,
-                endDate,
-            })
-            .andWhere('venta.user.id = :userId', { userId: user.id })
-            .getMany();
+    private handleDBExceptions(error: any): void {
+        // Maneja errores relacionados a la base de datos
+        throw new BadRequestException('Error al interactuar con la base de datos');
     }
-    
-    
 }

@@ -1,17 +1,21 @@
-import { IsInt, IsPositive, IsNumber, IsUUID } from 'class-validator';
+import { IsArray, IsInt, IsPositive, IsUUID } from 'class-validator';
 
-export class CreateVentaDto {
+export class CreateProductVentaDto {
     @IsUUID()
     productId: string;
-
-    @IsUUID()
-    userId: string;
 
     @IsInt()
     @IsPositive()
     cantidad: number;
 
-    @IsNumber()
     @IsPositive()
-    ventaPrice: number;
+    ventaPrice: number; // Este es el precio unitario durante la venta
+}
+
+export class CreateVentaDto {
+    @IsArray()
+    productos: CreateProductVentaDto[];
+
+    @IsUUID()
+    userId: string; // Si necesitas incluir el ID del usuario
 }
