@@ -44,16 +44,26 @@ export class VentasService {
                     throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
                 }
     
+                // Verificar si hay suficiente stock
+                if (product.stock < prod.cantidad) {
+                    throw new BadRequestException(`No hay suficiente stock para el producto ${prod.productId}.`);
+                }
+    
+                // Crear la relación del producto en la venta
                 const productVenta = this.productVentaRepository.create({
                     product,
                     cantidad: prod.cantidad,
                     ventaPrice: prod.ventaPrice,
-                    venta: venta, // Asignamos la relación con la venta que ya tiene id
+                    venta: venta,
                 });
     
                 productosVenta.push(productVenta);
                 venta.total += prod.ventaPrice * prod.cantidad;
                 venta.cantidadTotal += prod.cantidad;
+    
+                // Restar del stock del producto
+                product.stock -= prod.cantidad;
+                await this.productRepository.save(product); // Guardar la actualización del producto
             }
     
             venta.productos = productosVenta;
@@ -70,10 +80,6 @@ export class VentasService {
             throw new InternalServerErrorException(`Error al crear la venta: ${error.message}`);
         }
     }
-    
-    
-    
-    
     
 
     async update(id: string, updateVentaDto: UpdateVentaDto, user: User): Promise<{ venta: Venta }> {
