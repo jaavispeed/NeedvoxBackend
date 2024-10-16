@@ -12,7 +12,6 @@ import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Product } from 'src/products/entities/product.entity';
 import { User } from 'src/auth/entities/user.entity';
 
-
 @Injectable()
 export class VentasService {
     constructor(
@@ -27,6 +26,8 @@ export class VentasService {
     ) {}
 
     async create(createVentaDto: CreateVentaDto, user: User): Promise<Venta> {
+        console.log('Inicio de creación de venta:', createVentaDto);
+
         // Primero, creamos y guardamos la venta para generar el id
         const venta = await this.ventaRepository.save({
             user,
@@ -35,10 +36,15 @@ export class VentasService {
             fecha: new Date(),
         });
     
+        console.log('Venta creada con ID:', venta.id);
+
         const productosVenta: ProductVenta[] = [];
-    
+        let total = 0; // Inicializar el total aquí
+
         try {
             for (const prod of createVentaDto.productos) {
+                console.log('Procesando producto:', prod);
+
                 const product = await this.productRepository.findOne({ where: { id: prod.productId } });
                 if (!product) {
                     throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
@@ -58,15 +64,18 @@ export class VentasService {
                 });
     
                 productosVenta.push(productVenta);
-                venta.total += prod.ventaPrice * prod.cantidad;
+                total += prod.ventaPrice * prod.cantidad; // Calcular el total aquí
                 venta.cantidadTotal += prod.cantidad;
     
                 // Restar del stock del producto
                 product.stock -= prod.cantidad;
                 await this.productRepository.save(product); // Guardar la actualización del producto
+
+                console.log(`Stock del producto ${prod.productId} actualizado. Nuevo stock: ${product.stock}`);
             }
     
             venta.productos = productosVenta;
+            venta.total = total; // Asignar el total calculado a la venta
     
             // Guardamos los productos de la venta
             await this.productVentaRepository.save(productosVenta);
@@ -74,6 +83,7 @@ export class VentasService {
             // Actualizamos la venta con el total y la cantidad total de productos
             await this.ventaRepository.save(venta);
     
+            console.log('Venta guardada con éxito:', venta);
             return venta;
         } catch (error) {
             console.error('Error al crear la venta:', error);
@@ -81,8 +91,11 @@ export class VentasService {
         }
     }
     
+    
 
     async update(id: string, updateVentaDto: UpdateVentaDto, user: User): Promise<{ venta: Venta }> {
+        console.log(`Actualizando venta con ID: ${id}`);
+
         // Buscar la venta por ID junto con las relaciones necesarias
         const venta = await this.ventaRepository.findOne({ where: { id }, relations: ['user', 'productos', 'productos.product'] });
     
@@ -100,6 +113,8 @@ export class VentasService {
         const productosVenta: ProductVenta[] = [];
     
         for (const prod of updateVentaDto.productos) {
+            console.log('Actualizando producto:', prod);
+
             const product = await this.productRepository.findOne({ where: { id: prod.productId } }); // Cambiado a un objeto
             if (!product) {
                 throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
@@ -112,7 +127,7 @@ export class VentasService {
             });
     
             productosVenta.push(productVenta);
-            total += prod.ventaPrice * prod.cantidad; // Sumar al total
+            total += Number(prod.ventaPrice) * Number(prod.cantidad); // Sumar al total como número
         }
     
         venta.total = total; // Actualizar el total
@@ -124,11 +139,14 @@ export class VentasService {
         await this.ventaRepository.save(venta);
         await this.productVentaRepository.save(productosVenta); // Guardar cada relación en product_venta
     
+        console.log('Venta actualizada con éxito:', venta);
         return { venta }; // Retornar la venta actualizada
     }
     
 
     async remove(id: string, user: User): Promise<void> {
+        console.log(`Intentando eliminar venta con ID: ${id}`);
+
         const venta = await this.ventaRepository.findOne({ where: { id }, relations: ['user'] });
 
         if (!venta) {
@@ -141,34 +159,46 @@ export class VentasService {
         }
 
         await this.ventaRepository.remove(venta);
+        console.log(`Venta con ID ${id} eliminada con éxito.`);
     }
 
     async findByDate(date: string, user: User): Promise<Venta[]> {
+        console.log('Buscando ventas por fecha:', date);
+
         const fechaBuscada = new Date(date); // Convierte la cadena a Date
     
         if (isNaN(fechaBuscada.getTime())) {
             throw new BadRequestException('La fecha proporcionada no es válida.');
         }
     
-        return this.ventaRepository.find({
+        const ventas = await this.ventaRepository.find({
             where: {
                 fecha: fechaBuscada, // Usa el objeto Date aquí
                 user: { id: user.id }, // Relación con el usuario
             },
             relations: ['productos', 'productos.product'], // Incluir las relaciones necesarias
         });
+
+        console.log(`Ventas encontradas:`, ventas);
+        return ventas;
     }
     
 
     async findAll(user: User): Promise<Venta[]> {
-        return await this.ventaRepository.find({
+        console.log(`Buscando todas las ventas para el usuario con ID: ${user.id}`);
+
+        const ventas = await this.ventaRepository.find({
             where: { user },
             relations: ['productos', 'productos.product'],
         });
+
+        console.log(`Ventas encontradas:`, ventas);
+        return ventas;
     }
 
     private handleDBExceptions(error: any): void {
         // Maneja errores relacionados a la base de datos
+        console.error('Error en la base de datos:', error);
         throw new BadRequestException('Error al interactuar con la base de datos');
     }
 }
