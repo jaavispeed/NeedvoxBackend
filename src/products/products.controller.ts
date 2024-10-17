@@ -10,6 +10,7 @@ import {
   Query,
   ConflictException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -84,4 +85,11 @@ async create(
   async findByName(@Param('name') name: string, @GetUser() user: User) {
     return await this.productsService.findByName(name, user);
   }
+
+  @Get('count/:userId')
+  async countProductsByUser(@Param('userId') userId: string): Promise<number> {
+    const count = await this.productsService.countByUser(userId);
+    return count;
+  }
+  
 }

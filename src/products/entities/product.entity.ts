@@ -29,7 +29,7 @@ export class Product {
     })
     slug: string;
 
-    @ManyToOne(() => User, (user) => user.product, { eager: true })
+    @ManyToOne(() => User, (user) => user.products, { eager: true })
     user: User;
 
     @Column('date', { nullable: true })

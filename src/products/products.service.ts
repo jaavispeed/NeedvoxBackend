@@ -154,4 +154,10 @@ export class ProductsService {
       .andWhere('product.user.id = :userId', { userId: user.id })
       .getOne();
   }
+
+  async countByUser(userId: string): Promise<number> {
+    const count = await this.productRepository.count({ where: { user: { id: userId } } });
+    console.log(`Cantidad de productos para el usuario ${userId}: ${count}`);
+    return count;
+  }
 }

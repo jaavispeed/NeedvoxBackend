@@ -5,7 +5,7 @@ import {
     InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { ProductVenta, Venta } from './entities/ventas.entity';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
@@ -162,26 +162,30 @@ export class VentasService {
         console.log(`Venta con ID ${id} eliminada con éxito.`);
     }
 
-    async findByDate(date: string, user: User): Promise<Venta[]> {
-        console.log('Buscando ventas por fecha:', date);
-
-        const fechaBuscada = new Date(date); // Convierte la cadena a Date
+    async findByDate(date: string): Promise<Venta[]> {
+        const startDate = new Date(date);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999); // Último milisegundo del día
     
-        if (isNaN(fechaBuscada.getTime())) {
-            throw new BadRequestException('La fecha proporcionada no es válida.');
-        }
+        console.log('Consultando ventas desde:', startDate, 'hasta:', endDate); // Para depuración
     
         const ventas = await this.ventaRepository.find({
-            where: {
-                fecha: fechaBuscada, // Usa el objeto Date aquí
-                user: { id: user.id }, // Relación con el usuario
+            where: { 
+                fecha: Between(startDate, endDate) // Sin filtrar por usuario
             },
-            relations: ['productos', 'productos.product'], // Incluir las relaciones necesarias
+            relations: ['productos', 'productos.product'],
         });
-
-        console.log(`Ventas encontradas:`, ventas);
-        return ventas;
+    
+        console.log('Ventas encontradas:', ventas);
+        return ventas; // Retorna las ventas encontradas
     }
+    
+    
+    
+    
+    
+    
+    
     
 
     async findAll(user: User): Promise<Venta[]> {

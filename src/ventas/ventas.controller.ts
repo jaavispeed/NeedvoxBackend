@@ -8,6 +8,8 @@ import {
     Param,
     Delete,
     Get,
+    BadRequestException,
+    Req,
   } from '@nestjs/common';
   import { CreateVentaDto } from './dto/create-venta.dto';
   import { VentasService } from './ventas.service';
@@ -49,12 +51,12 @@ import {
       return this.ventasService.remove(id, user);
     }
   
-    @Auth()
     @Get('fecha/:date')
-    async findByDate(@Param('date') date: string, @Request() req) {
-      const user: User = req.user; // Obtén el usuario desde el objeto de solicitud
-      return await this.ventasService.findByDate(date, user);
+    async findByDate(@Param('date') date: string): Promise<Venta[]> {
+        console.log('Fecha recibida:', date); // Para depuración
+        return await this.ventasService.findByDate(date);
     }
+    
   
     @Auth()
     @Get()
