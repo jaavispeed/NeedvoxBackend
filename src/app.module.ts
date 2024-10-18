@@ -5,12 +5,11 @@ import { ProductsModule } from './products/products.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { VentasModule } from './ventas/ventas.module';
-
+import { UsuariosModule } from './usuarios/usuarios.module'; // Asegúrate de que la ruta sea correcta
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -21,15 +20,11 @@ import { VentasModule } from './ventas/ventas.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
-
     ProductsModule,
-
     CommonModule,
-
     AuthModule,
-
     VentasModule,
+    UsuariosModule, // Agrega este módulo aquí
   ],
-
 })
 export class AppModule {}
