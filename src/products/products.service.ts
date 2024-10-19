@@ -25,22 +25,24 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto, user: User) {
     try {
+      // Limpieza y verificación del código de barras
       const barcode = createProductDto.barcode?.trim() === '' || createProductDto.barcode === 'Sin código de barras' ? null : createProductDto.barcode;
   
-      // Verificar si ya existe un producto con el mismo nombre
+      // Verificar si ya existe un producto con el mismo nombre para el mismo usuario
       const existingProductWithTitle = await this.findByName(createProductDto.title, user);
       if (existingProductWithTitle) {
         throw new BadRequestException('Nombre ya creado.');
       }
   
-      // Verificar si ya existe un producto con el mismo código de barras
+      // Verificar si ya existe un producto con el mismo código de barras para el mismo usuario
       if (barcode) {
-        const existingProductWithBarcode = await this.findByBarcode(barcode);
+        const existingProductWithBarcode = await this.findByBarcodeAndUser(barcode, user);
         if (existingProductWithBarcode) {
-          throw new BadRequestException('Código de barras ya creado.');
+          throw new BadRequestException('Código de barras ya creado para este usuario.');
         }
       }
   
+      // Crear y guardar el nuevo producto
       const product = this.productRepository.create({
         ...createProductDto,
         barcode,
@@ -57,6 +59,7 @@ export class ProductsService {
       this.handleDBExceptions(error); // Manejamos otros errores
     }
   }
+  
   
 
   findAll(paginationDto: PaginationDto, user: User) {
@@ -95,37 +98,33 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto, user: User) {
     const barcode = updateProductDto.barcode?.trim() === '' || updateProductDto.barcode === 'Sin código de barras' ? null : updateProductDto.barcode;
-
+  
     const product = await this.productRepository.preload({
       id: id,
       ...updateProductDto,
       barcode,
     });
-
+  
     if (!product) throw new NotFoundException(`Producto con id: ${id} no encontrado.`);
-
-    // Validar si existe un producto con el mismo nombre
+  
+    // Validar si existe un producto con el mismo nombre para este usuario
     const existingProductWithTitle = await this.findByName(updateProductDto.title, user);
     if (existingProductWithTitle && existingProductWithTitle.id !== id) {
-      throw new BadRequestException('Nombre ya creado.');
+      throw new BadRequestException('Nombre ya creado para este usuario.');
     }
-
-    // Validar si existe un producto con el mismo código de barras
+  
+    // Validar si existe un producto con el mismo código de barras para este usuario
     if (barcode) {
-      const existingProductWithBarcode = await this.findByBarcode(barcode);
+      const existingProductWithBarcode = await this.findByBarcodeAndUser(barcode, user);
       if (existingProductWithBarcode && existingProductWithBarcode.id !== id) {
-        throw new BadRequestException('Código de barras ya creado.');
+        throw new BadRequestException('Código de barras ya creado para este usuario.');
       }
     }
-
-    try {
-      product.user = user;
-      await this.productRepository.save(product);
-      return product;
-    } catch (error) {
-      this.handleDBExceptions(error);
-    }
+  
+    // Guardar el producto actualizado
+    return await this.productRepository.save(product);
   }
+  
 
   async remove(id: string, user: User) {
     const product = await this.findOne(id, user);
@@ -141,9 +140,15 @@ export class ProductsService {
     throw new InternalServerErrorException('Unexpected error, check server logs');
   }
 
-  async findByBarcode(barcode: string) {
-    return await this.productRepository.findOne({ where: { barcode } });
+  async findByBarcodeAndUser(barcode: string, user: User): Promise<Product | undefined> {
+    return await this.productRepository.findOne({
+      where: {
+        barcode,
+        user, // Relación con la entidad User
+      },
+    });
   }
+  
 
   async findByName(title: string, user: User) {
     const lowerTitle = title.toLowerCase();
