@@ -32,8 +32,6 @@ export class Product {
     @ManyToOne(() => User, (user) => user.products, { eager: true })
     user: User;
 
-    @Column('date', { nullable: true })
-    expiryDate?: string;
 
     @Column('text', { nullable: true })
     barcode?: string; // Esto es opcional
