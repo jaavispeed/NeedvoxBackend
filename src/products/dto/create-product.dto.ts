@@ -24,10 +24,6 @@ export class CreateProductDto {
     @Min(0)
     stock?: number;
 
-    @IsDateString()
-    @IsOptional()
-    expiryDate?: string; // Añadido como opcional
-
     @IsString()
     @IsOptional()
     barcode?: string;

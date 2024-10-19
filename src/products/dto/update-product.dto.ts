@@ -22,9 +22,6 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
     @Min(0)
     stock?: number;
 
-    @IsDateString()
-    @IsOptional()
-    expiryDate?: string | null; // Añadido como opcional
 
     @IsString()
     @IsOptional()
