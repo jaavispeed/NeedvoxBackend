@@ -5,6 +5,7 @@ import { ProductsModule } from './products/products.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { VentasModule } from './ventas/ventas.module';
+import { LotesModule } from './lotes/lotes.module';
 
 
 @Module({
@@ -29,6 +30,9 @@ import { VentasModule } from './ventas/ventas.module';
     AuthModule,
 
     VentasModule,
+
+
+    LotesModule,
   ],
 
 })

@@ -1,5 +1,6 @@
 import { User } from "src/auth/entities/user.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Lote } from "src/lotes/entities/lotes.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Product {
@@ -36,6 +37,8 @@ export class Product {
     @Column('text', { nullable: true })
     barcode?: string; // Esto es opcional
 
+    @OneToMany(() => Lote, (lote) => lote.producto)
+    lotes: Lote[];
 
     @BeforeInsert()
     checkSlugInsert() {

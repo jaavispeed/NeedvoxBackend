@@ -1,3 +1,4 @@
+import { Lote } from "src/lotes/entities/lotes.entity";
 import { Product } from "src/products/entities/product.entity";
 import { Venta } from "src/ventas/entities/ventas.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -27,6 +28,9 @@ export class User {
 
     @OneToMany(() => Venta, (venta) => venta.user) // Aquí se agrega la relación con Venta
     ventas: Venta[]; // Cambiar a plural para reflejar múltiples ventas
+
+    @OneToMany(() => Lote, (lote) => lote.user) // Relación con los lotes
+    lotes: Lote[];
 
     @BeforeInsert()
     checkFieldsBeforeInsert() {
