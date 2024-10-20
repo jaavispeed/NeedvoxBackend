@@ -163,23 +163,22 @@ export class VentasService {
     }
 
     async findByDate(date: string, user: User): Promise<Venta[]> {
-        const startDate = new Date(date);
-        const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999);
+        // Establece la fecha de inicio para el 19 de octubre de 2024
+        const startDate = new Date(`${date}T00:00:00.000Z`); // '2024-10-19T00:00:00.000Z'
+        // Ajusta a UTC-3 para la fecha de inicio
+        startDate.setHours(startDate.getHours() - 3); // Esto dará '2024-10-18T21:00:00.000Z'
     
-        console.log('Consultando ventas desde:', startDate, 'hasta:', endDate, 'para el usuario:', user.id);
+        // Establece la fecha de fin para el 19 de octubre de 2024
+        const endDate = new Date(`${date}T23:59:59.999Z`); // '2024-10-19T23:59:59.999Z'
+        // Ajusta a UTC-3 para la fecha de fin
+        endDate.setHours(endDate.getHours() - 3); // Esto dará '2024-10-19T20:59:59.999Z'
     
-        // Obtiene todas las ventas del usuario para depuración
-        const allVentas = await this.ventaRepository.find({
-            where: { user: { id: user.id } },
-        });
-    
-        console.log('Todas las ventas del usuario:', allVentas);
+        console.log('Consultando ventas desde:', startDate.toISOString(), 'hasta:', endDate.toISOString(), 'para el usuario:', user.id);
     
         const ventas = await this.ventaRepository.find({
             where: {
-                fecha: Between(startDate, endDate),
-                user: { id: user.id },
+                fecha: Between(startDate, endDate), // Rango de fechas en UTC
+                user: { id: user.id }, // Filtra por el ID del usuario
             },
             relations: ['productos', 'productos.product'],
         });
@@ -187,6 +186,10 @@ export class VentasService {
         console.log('Ventas encontradas:', ventas);
         return ventas;
     }
+    
+    
+    
+    
     
     
     
