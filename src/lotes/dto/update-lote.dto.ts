@@ -24,4 +24,5 @@ export class UpdateLoteDto {
   @IsOptional()
   @IsString()
   productId?: string; // ID del producto asociado
+  
 }

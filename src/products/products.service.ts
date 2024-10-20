@@ -28,37 +28,22 @@ export class ProductsService {
       // Limpieza y verificación del código de barras
       const barcode = createProductDto.barcode?.trim() === '' || createProductDto.barcode === 'Sin código de barras' ? null : createProductDto.barcode;
   
-      // Verificar si ya existe un producto con el mismo nombre para el mismo usuario
-      const existingProductWithTitle = await this.findByName(createProductDto.title, user);
-      if (existingProductWithTitle) {
-        throw new BadRequestException('Nombre ya creado.');
-      }
-  
-      // Verificar si ya existe un producto con el mismo código de barras para el mismo usuario
-      if (barcode) {
-        const existingProductWithBarcode = await this.findByBarcodeAndUser(barcode, user);
-        if (existingProductWithBarcode) {
-          throw new BadRequestException('Código de barras ya creado para este usuario.');
-        }
-      }
-  
-      // Crear y guardar el nuevo producto
+      // Crear y guardar el nuevo producto sin verificar unicidad
       const product = this.productRepository.create({
         ...createProductDto,
         barcode,
         user,
+        fechaCreacion: new Date().toISOString(), // Asignar la fecha de creación actual
       });
   
       await this.productRepository.save(product);
       return product;
     } catch (error) {
-      // Si el error es un BadRequestException, lo lanzamos de nuevo para que el cliente lo maneje
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      this.handleDBExceptions(error); // Manejamos otros errores
+      // Manejamos errores
+      this.handleDBExceptions(error);
     }
   }
+  
   
   
 

@@ -37,6 +37,12 @@ export class Product {
     @Column('text', { nullable: true })
     barcode?: string; // Esto es opcional
 
+    @Column({ type: 'date', nullable: true }) // Si quieres que sea opcional
+    expiryDate?: Date;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }) // Fecha de creación
+    fechaCreacion: Date;
+
     @OneToMany(() => Lote, (lote) => lote.producto)
     lotes: Lote[];
 

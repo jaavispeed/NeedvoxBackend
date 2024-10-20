@@ -24,7 +24,15 @@ export class CreateProductDto {
     @Min(0)
     stock?: number;
 
+    @IsDateString()
+    @IsOptional()
+    expiryDate?: string; // Añadido como opcional
+
     @IsString()
     @IsOptional()
     barcode?: string;
+
+    @IsDateString({}, { message: 'La fecha de creación debe ser una fecha válida.' })
+    @IsOptional()
+    fechaCreacion?: string; // Añadido como opcional
 }
