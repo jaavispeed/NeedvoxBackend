@@ -162,28 +162,31 @@ export class VentasService {
         console.log(`Venta con ID ${id} eliminada con éxito.`);
     }
 
-    async findByDate(date: string): Promise<Venta[]> {
+    async findByDate(date: string, user: User): Promise<Venta[]> {
         const startDate = new Date(date);
         const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999); // Último milisegundo del día
+        endDate.setHours(23, 59, 59, 999);
     
-        console.log('Consultando ventas desde:', startDate, 'hasta:', endDate); // Para depuración
+        console.log('Consultando ventas desde:', startDate, 'hasta:', endDate, 'para el usuario:', user.id);
+    
+        // Obtiene todas las ventas del usuario para depuración
+        const allVentas = await this.ventaRepository.find({
+            where: { user: { id: user.id } },
+        });
+    
+        console.log('Todas las ventas del usuario:', allVentas);
     
         const ventas = await this.ventaRepository.find({
-            where: { 
-                fecha: Between(startDate, endDate) // Sin filtrar por usuario
+            where: {
+                fecha: Between(startDate, endDate),
+                user: { id: user.id },
             },
             relations: ['productos', 'productos.product'],
         });
     
         console.log('Ventas encontradas:', ventas);
-        return ventas; // Retorna las ventas encontradas
+        return ventas;
     }
-    
-    
-    
-    
-    
     
     
     

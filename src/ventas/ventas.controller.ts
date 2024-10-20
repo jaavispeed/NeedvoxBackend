@@ -20,6 +20,7 @@ import {
   import { ProductventaService } from './productventa.service';
   
   @Controller('ventas')
+  @Auth()
   export class VentasController {
     constructor(
       private readonly ventasService: VentasService,
@@ -52,10 +53,13 @@ import {
     }
   
     @Get('fecha/:date')
-    async findByDate(@Param('date') date: string): Promise<Venta[]> {
-        console.log('Fecha recibida:', date); // Para depuración
-        return await this.ventasService.findByDate(date);
-    }
+  @Auth() // Asegúrate de que el usuario esté autenticado
+  async findByDate(@Param('date') date: string, @Request() req): Promise<Venta[]> {
+    const user: User = req.user; // Obtén el usuario autenticado desde la solicitud
+    console.log('Usuario autenticado:', user);
+    return await this.ventasService.findByDate(date, user);
+  }
+    
     
   
     @Auth()
