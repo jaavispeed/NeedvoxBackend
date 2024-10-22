@@ -48,6 +48,11 @@ async create(
     return this.productsService.findAll(paginationDto, user);
   }
 
+  @Get('/productAdmin')
+  findAllAdmin(@Query() paginationDto: PaginationDto,) {
+    return this.productsService.findAllAdmin(paginationDto);
+  }
+
   @Get(':term')
   async findOne(@Param('term') term: string, @GetUser() user: User) {
     return await this.productsService.findOne(term, user);
