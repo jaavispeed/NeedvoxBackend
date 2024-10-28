@@ -44,7 +44,7 @@ export class ProductsService {
       await this.productRepository.save(product);
   
       // Llama a la función para calcular y actualizar el stock total después de crear el producto
-      await this.updateStockTotal(product.id, user);
+
   
       return product;
     } catch (error) {
@@ -112,8 +112,26 @@ export class ProductsService {
     }
 
     // Guardar el producto actualizado
-    return await this.productRepository.save(product);
-  }
+    const updatedProduct = await this.productRepository.save(product);
+
+    // Calcular el stock total
+    const stockTotal = await this.calculateTotalStock(id, user); // Asegúrate de tener este método implementado
+
+    // Actualizar el producto con el nuevo stock total
+    updatedProduct.stockTotal = stockTotal;
+    return await this.productRepository.save(updatedProduct);
+}
+
+async calculateTotalStock(productId: string, user: User): Promise<number> {
+  // Asegúrate de que el servicio de lotes esté inyectado
+  const lotes = await this.lotesService.findAllByProduct(productId, user);
+
+  // Sumar el stock total de los lotes
+  return lotes.reduce((total, lote) => total + lote.stock, 0);
+}
+
+
+
 
   async remove(id: string, user: User) {
     const product = await this.findOne(id, user);
@@ -162,46 +180,4 @@ export class ProductsService {
       skip: offset,
     });
   }
-  
-  async updateStockTotal(productId: string, user: User): Promise<void> {
-    const totalStock = await this.calculateTotalStock(productId, user);
-    const product = await this.productRepository.findOne({ where: { id: productId } });
-
-    if (!product) {
-        throw new NotFoundException('Producto no encontrado.');
-    }
-
-    product.stockTotal = totalStock; // Actualiza el stock total
-    console.log(`Actualizando stockTotal de producto ${productId} a ${totalStock}`); // Verifica que se esté actualizando
-    await this.productRepository.save(product);
-    console.log(`Stock total actualizado en la base de datos para el producto ${productId}`); // Confirma la actualización
-}
-
-
-
-
-
-
-
-
-
-async calculateTotalStock(productId: string, user: User): Promise<number> {
-  const lotes = await this.lotesService.findAllByProductAndUser(productId, user);
-  
-  // Log para verificar los lotes recuperados
-  console.log(`Lotes encontrados para el producto ${productId}:`, lotes);
-  
-  // Si no se recuperan lotes, deberías ver un mensaje claro aquí
-  if (lotes.length === 0) {
-      console.log(`No se encontraron lotes para el producto ${productId}`);
-  }
-
-  const totalStock = lotes.reduce((total, lote) => total + lote.stock, 0);
-  console.log(`Total stock calculado para el producto ${productId}: ${totalStock}`);
-  
-  return totalStock;
-}
-
-
-
 }

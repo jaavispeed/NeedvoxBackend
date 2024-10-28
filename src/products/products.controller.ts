@@ -17,11 +17,13 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { Auth, GetUser } from 'src/auth/decorators';
 import { User } from '../auth/entities/user.entity';
+import { Lote } from 'src/lotes/entities/lotes.entity';
+import { LotesService } from 'src/lotes/lotes.service';
 
 @Controller('products')
 @Auth()
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService, private readonly lotesService: LotesService) {}
 
   @Post()
   async create(
@@ -105,9 +107,30 @@ export class ProductsController {
     return count;
   }
 
-  @Get(':id/total-stock')
-  async getTotalStock(@Param('id') productId: string, @GetUser() user: User): Promise<number> {
-    const totalStock = await this.productsService.calculateTotalStock(productId, user);
-    return totalStock;
-  }
+  @Get('producto/:id')
+async findAllByProduct(
+    @Param('id') productId: string,
+    @GetUser() user: User
+): Promise<{ lotes: Lote[]; stockTotal: number }> {
+    console.log(`Buscando lotes para el producto: ${productId} y usuario: ${user.id}`);
+    
+    // Obtiene los lotes desde el servicio
+    const lotes = await this.lotesService.findAllByProduct(productId, user);
+
+    // Sumar el stock total de los lotes
+    const stockTotal = lotes.reduce((total, lote) => total + lote.stock, 0);
+
+    // Log del stock total calculado
+    console.log(`Stock total calculado para el producto ${productId}: ${stockTotal}`);
+
+    // Log para mostrar los lotes encontrados
+    console.log(`Lotes encontrados para el producto ${productId}:`, lotes);
+
+    // Actualizar el stockTotal del producto
+    await this.productsService.update(productId, { stockTotal }, user);
+
+    return { lotes, stockTotal };
+}
+
+
 }

@@ -41,10 +41,14 @@ export class LotesService {
     const savedLote = await this.loteRepository.save(lote);
 
     // Actualiza el stock total del producto
-    await this.productsService.updateStockTotal(product.id, user); // Asegúrate de pasar el usuario
+    const stockTotal = await this.productsService.calculateTotalStock(product.id, user);
+    product.stockTotal = stockTotal; // Actualiza el stockTotal en el objeto producto
+
+    await this.productRepository.save(product); // Guarda el producto actualizado
 
     return savedLote;
 }
+
 
 
   async findAll(paginationDto: PaginationDto, user: User): Promise<Lote[]> {
@@ -109,10 +113,22 @@ export class LotesService {
 }
 
 
-  async findAllByProduct(productId: string, user: User): Promise<Lote[]> {
-    return await this.loteRepository.find({
-        where: { user, producto: { id: productId } },
-    });
+async findAllByProduct(productId: string, user: User): Promise<Lote[]> {
+  console.log(`Buscando lotes para productId: ${productId} y userId: ${user.id}`);
+  
+  try {
+      const lotes = await this.loteRepository.find({
+          where: { user, producto: { id: productId } }, // Cambia 'product' a 'producto'
+      });
+
+      console.log(`Lotes encontrados:`, lotes);
+      return lotes;
+  } catch (error) {
+      console.error('Error al buscar lotes:', error);
+      throw new Error('No se pudieron encontrar los lotes.');
+  }
 }
+
+
 
 }
