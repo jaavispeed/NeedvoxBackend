@@ -50,10 +50,7 @@ export class VentasService {
                     throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
                 }
     
-                // Verificar si hay suficiente stock
-                if (product.stock < prod.cantidad) {
-                    throw new BadRequestException(`No hay suficiente stock para el producto ${prod.productId}.`);
-                }
+
     
                 // Crear la relación del producto en la venta
                 const productVenta = this.productVentaRepository.create({
@@ -68,10 +65,8 @@ export class VentasService {
                 venta.cantidadTotal += prod.cantidad;
     
                 // Restar del stock del producto
-                product.stock -= prod.cantidad;
                 await this.productRepository.save(product); // Guardar la actualización del producto
 
-                console.log(`Stock del producto ${prod.productId} actualizado. Nuevo stock: ${product.stock}`);
             }
     
             venta.productos = productosVenta;
@@ -186,12 +181,6 @@ export class VentasService {
         console.log('Ventas encontradas:', ventas);
         return ventas;
     }
-    
-    
-    
-    
-    
-    
     
 
     async findAll(user: User): Promise<Venta[]> {

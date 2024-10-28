@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -13,6 +15,7 @@ import { Product } from './entities/product.entity';
 import { PaginationDto } from '../common/dtos/pagination.dto';
 import { validate as isUUID } from 'uuid';
 import { User } from 'src/auth/entities/user.entity';
+import { LotesService } from 'src/lotes/lotes.service';
 
 @Injectable()
 export class ProductsService {
@@ -21,31 +24,33 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+
+
+
+    @Inject(forwardRef(() => LotesService))
+    private readonly lotesService: LotesService,
   ) {}
 
   async create(createProductDto: CreateProductDto, user: User) {
     try {
-      // Limpieza y verificación del código de barras
       const barcode = createProductDto.barcode?.trim() === '' || createProductDto.barcode === 'Sin código de barras' ? null : createProductDto.barcode;
   
-      // Crear y guardar el nuevo producto sin verificar unicidad
       const product = this.productRepository.create({
         ...createProductDto,
         barcode,
         user,
-        fechaCreacion: new Date().toISOString(), // Asignar la fecha de creación actual
       });
   
       await this.productRepository.save(product);
+  
+      // Llama a la función para calcular y actualizar el stock total después de crear el producto
+      await this.updateStockTotal(product.id, user);
+  
       return product;
     } catch (error) {
-      // Manejamos errores
       this.handleDBExceptions(error);
     }
   }
-  
-  
-  
 
   findAll(paginationDto: PaginationDto, user: User) {
     const { limit = 10, offset = 0 } = paginationDto;
@@ -56,17 +61,6 @@ export class ProductsService {
       skip: offset,
     });
   }
-
-  
-  findAllAdmin(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
-
-    return this.productRepository.find({
-      take: limit,
-      skip: offset,
-    });
-  }
-
 
   async findOne(term: string, user: User) {
     let product: Product;
@@ -94,21 +88,21 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto, user: User) {
     const barcode = updateProductDto.barcode?.trim() === '' || updateProductDto.barcode === 'Sin código de barras' ? null : updateProductDto.barcode;
-  
+
     const product = await this.productRepository.preload({
       id: id,
       ...updateProductDto,
       barcode,
     });
-  
+
     if (!product) throw new NotFoundException(`Producto con id: ${id} no encontrado.`);
-  
+
     // Validar si existe un producto con el mismo nombre para este usuario
     const existingProductWithTitle = await this.findByName(updateProductDto.title, user);
     if (existingProductWithTitle && existingProductWithTitle.id !== id) {
       throw new BadRequestException('Nombre ya creado para este usuario.');
     }
-  
+
     // Validar si existe un producto con el mismo código de barras para este usuario
     if (barcode) {
       const existingProductWithBarcode = await this.findByBarcodeAndUser(barcode, user);
@@ -116,11 +110,10 @@ export class ProductsService {
         throw new BadRequestException('Código de barras ya creado para este usuario.');
       }
     }
-  
+
     // Guardar el producto actualizado
     return await this.productRepository.save(product);
   }
-  
 
   async remove(id: string, user: User) {
     const product = await this.findOne(id, user);
@@ -144,7 +137,6 @@ export class ProductsService {
       },
     });
   }
-  
 
   async findByName(title: string, user: User) {
     const lowerTitle = title.toLowerCase();
@@ -161,4 +153,55 @@ export class ProductsService {
     console.log(`Cantidad de productos para el usuario ${userId}: ${count}`);
     return count;
   }
+
+  findAllAdmin(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+  
+    return this.productRepository.find({
+      take: limit,
+      skip: offset,
+    });
+  }
+  
+  async updateStockTotal(productId: string, user: User): Promise<void> {
+    const totalStock = await this.calculateTotalStock(productId, user);
+    const product = await this.productRepository.findOne({ where: { id: productId } });
+
+    if (!product) {
+        throw new NotFoundException('Producto no encontrado.');
+    }
+
+    product.stockTotal = totalStock; // Actualiza el stock total
+    console.log(`Actualizando stockTotal de producto ${productId} a ${totalStock}`); // Verifica que se esté actualizando
+    await this.productRepository.save(product);
+    console.log(`Stock total actualizado en la base de datos para el producto ${productId}`); // Confirma la actualización
+}
+
+
+
+
+
+
+
+
+
+async calculateTotalStock(productId: string, user: User): Promise<number> {
+  const lotes = await this.lotesService.findAllByProductAndUser(productId, user);
+  
+  // Log para verificar los lotes recuperados
+  console.log(`Lotes encontrados para el producto ${productId}:`, lotes);
+  
+  // Si no se recuperan lotes, deberías ver un mensaje claro aquí
+  if (lotes.length === 0) {
+      console.log(`No se encontraron lotes para el producto ${productId}`);
+  }
+
+  const totalStock = lotes.reduce((total, lote) => total + lote.stock, 0);
+  console.log(`Total stock calculado para el producto ${productId}: ${totalStock}`);
+  
+  return totalStock;
+}
+
+
+
 }

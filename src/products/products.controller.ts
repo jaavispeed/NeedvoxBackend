@@ -24,24 +24,27 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-async create(
-  @Body() createProductDto: CreateProductDto,
-  @GetUser() user: User
-) {
-  console.log('Intentando crear producto con:', createProductDto); // Log para depurar
-  try {
-    return await this.productsService.create(createProductDto, user);
-  } catch (error) {
-    console.error('Error al crear producto:', error); // Log de error
-    if (error.message.includes('Nombre ya creado')) {
-      throw new ConflictException('El nombre del producto ya existe.');
-    } else if (error.message.includes('Código de barras ya creado')) {
-      throw new ConflictException('El código de barras ya existe.');
+  async create(
+    @Body() createProductDto: CreateProductDto,
+    @GetUser() user: User
+  ) {
+    console.log('Intentando crear producto con:', createProductDto); // Log para depurar
+    try {
+      const product = await this.productsService.create(createProductDto, user);
+      
+      // No es necesario calcular ni actualizar stockTotal
+      return product; // Devuelve el producto creado
+    } catch (error) {
+      console.error('Error al crear producto:', error); // Log de error
+      if (error.message.includes('Nombre ya creado')) {
+        throw new ConflictException('El nombre del producto ya existe.');
+      } else if (error.message.includes('Código de barras ya creado')) {
+        throw new ConflictException('El código de barras ya existe.');
+      }
+      throw new BadRequestException('Error al crear el producto. Verifica los datos ingresados.');
     }
-    throw new BadRequestException('Error al crear el producto. Verifica los datos ingresados.');
   }
-}
-
+  
 
   @Get()
   findAll(@Query() paginationDto: PaginationDto, @GetUser() user: User) {
@@ -49,7 +52,7 @@ async create(
   }
 
   @Get('/productAdmin')
-  findAllAdmin(@Query() paginationDto: PaginationDto,) {
+  findAllAdmin(@Query() paginationDto: PaginationDto) {
     return this.productsService.findAllAdmin(paginationDto);
   }
 
@@ -65,7 +68,11 @@ async create(
     @GetUser() user: User
   ) {
     try {
-      return await this.productsService.update(id, updateProductDto, user);
+      // Actualiza el producto con los datos proporcionados
+      const product = await this.productsService.update(id, updateProductDto, user);
+      
+      // No es necesario calcular ni actualizar stockTotal
+      return product; // Devuelve el producto actualizado
     } catch (error) {
       // Propagar la excepción original
       if (error instanceof BadRequestException) {
@@ -79,6 +86,8 @@ async create(
       throw new BadRequestException('Error al actualizar el producto. Verifica los datos ingresados.');
     }
   }
+  
+  
 
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
@@ -95,5 +104,10 @@ async create(
     const count = await this.productsService.countByUser(userId);
     return count;
   }
-  
+
+  @Get(':id/total-stock')
+  async getTotalStock(@Param('id') productId: string, @GetUser() user: User): Promise<number> {
+    const totalStock = await this.productsService.calculateTotalStock(productId, user);
+    return totalStock;
+  }
 }

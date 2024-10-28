@@ -4,35 +4,12 @@ export class CreateProductDto {
     @IsString()
     @MinLength(1)
     title: string;
-
-    @IsNumber()
-    @IsOptional()
-    @Min(0)
-    compraPrice?: number;
-
-    @IsNumber()
-    @IsOptional()
-    @Min(0)
-    ventaPrice?: number;
-
+    
     @IsString()
     @IsOptional()
     slug?: string; 
-    
-    @IsInt()
-    @IsOptional()
-    @Min(0)
-    stock?: number;
-
-    @IsDateString()
-    @IsOptional()
-    expiryDate?: string; // Añadido como opcional
 
     @IsString()
     @IsOptional()
     barcode?: string;
-
-    @IsDateString({}, { message: 'La fecha de creación debe ser una fecha válida.' })
-    @IsOptional()
-    fechaCreacion?: string; // Añadido como opcional
 }

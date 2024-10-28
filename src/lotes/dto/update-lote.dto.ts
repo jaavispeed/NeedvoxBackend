@@ -1,28 +1,24 @@
-import { IsString, IsNumber, IsDateString, IsOptional } from 'class-validator';
+import { IsNumber, IsDateString, IsOptional, IsPositive } from 'class-validator';
 
 export class UpdateLoteDto {
-  @IsOptional()
-  @IsString()
-  nombreLote?: string;
 
   @IsOptional()
+  @IsPositive()
   @IsNumber()
   precioCompra?: number;
 
   @IsOptional()
+  @IsPositive()
   @IsNumber()
   precioVenta?: number;
 
   @IsOptional()
+  @IsPositive()
   @IsNumber()
   stock?: number;
 
   @IsOptional()
   @IsDateString()
   fechaCaducidad?: Date;
-
-  @IsOptional()
-  @IsString()
-  productId?: string; // ID del producto asociado
   
 }

@@ -11,20 +11,8 @@ export class Product {
     })
     title: string;
 
-    @Column('numeric', {
-        default: 0,
-    })
-    compraPrice: number;
-
-    @Column('numeric', {
-        default: 0,
-    })
-    ventaPrice: number;
-
-    @Column('int', {
-        default: 0,
-    })
-    stock: number;
+    @Column('int', { default: 0 })
+    stockTotal: number; // Total de stock sumado de todos los lotes
 
     @Column('text', {
     })
@@ -33,12 +21,8 @@ export class Product {
     @ManyToOne(() => User, (user) => user.products, { eager: true })
     user: User;
 
-
     @Column('text', { nullable: true })
     barcode?: string; // Esto es opcional
-
-    @Column({ type: 'date', nullable: true }) // Si quieres que sea opcional
-    expiryDate?: Date;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }) // Fecha de creación
     fechaCreacion: Date;

@@ -7,9 +7,6 @@ export class Lote {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  nombreLote: string;
-
   @Column({ type: 'int' }) // Cambiado a int
   precioCompra: number;
 

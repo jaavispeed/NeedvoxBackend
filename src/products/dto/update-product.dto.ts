@@ -6,30 +6,16 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
     @IsString()
     @IsOptional()
     title?: string;
-
-    @IsNumber()
+    
+    @IsString()
     @IsOptional()
-    @Min(0)
-    compraPrice?: number;
-
-    @IsNumber()
-    @IsOptional()
-    @Min(0)
-    ventaPrice?: number;
-
-    @IsInt()
-    @IsOptional()
-    @Min(0)
-    stock?: number;
-
+    slug?: string; // Si decides mantenerlo como opcional
 
     @IsString()
     @IsOptional()
     barcode?: string;
 
-    @IsDateString()
+    @IsNumber()
     @IsOptional()
-    expiryDate?: string; // Añadido como opcional
-
-    
+    stockTotal?: number; // Agrega esta línea
 }

@@ -42,6 +42,11 @@ export class LotesController {
   async findAllByUser(@GetUser() user: User): Promise<Lote[]> {
     return this.lotesService.findAllByUser(user);
   }
-  
+
+  @Get('producto/:id')
+  async findAllByProduct(@Param('id') productId: string, @GetUser() user: User): Promise<Lote[]> {
+      console.log(`Buscando lotes para el producto: ${productId} y usuario: ${user.id}`);
+      return this.lotesService.findAllByProduct(productId, user);
+  }
   
 }
