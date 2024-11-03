@@ -133,10 +133,17 @@ async calculateTotalStock(productId: string, user: User): Promise<number> {
 
 
 
-  async remove(id: string, user: User) {
-    const product = await this.findOne(id, user);
-    await this.productRepository.remove(product);
+async remove(id: string, user: User): Promise<Product | null> {
+  const product = await this.productRepository.findOne({ where: { id, user } });
+  
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado.');
   }
+
+  await this.productRepository.remove(product);
+  return product; // Devuelve el producto que fue eliminado
+}
+
 
   private handleDBExceptions(error: any) {
     if (error.code === '23505') { // Código de error para violaciones de unicidad en PostgreSQL

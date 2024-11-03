@@ -10,6 +10,7 @@ import {
   Query,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -93,8 +94,20 @@ export class ProductsController {
 
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
-    return await this.productsService.remove(id, user);
+    const deletedProduct = await this.productsService.remove(id, user);
+    
+    // Verificamos si deletedProduct es nulo
+    if (!deletedProduct) {
+      throw new NotFoundException('Producto no encontrado.');
+    }
+  
+    return {
+      message: 'Producto eliminado con éxito.',
+      id: deletedProduct.id, // También puedes devolver el id del producto eliminado si es necesario
+    };
   }
+  
+  
 
   @Get('name/:name')
   async findByName(@Param('name') name: string, @GetUser() user: User) {
