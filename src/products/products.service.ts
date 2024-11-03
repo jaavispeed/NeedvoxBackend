@@ -35,6 +35,20 @@ export class ProductsService {
     try {
       const barcode = createProductDto.barcode?.trim() === '' || createProductDto.barcode === 'Sin código de barras' ? null : createProductDto.barcode;
   
+      // Verificar si ya existe un producto con el mismo nombre para este usuario
+      const existingProductWithTitle = await this.findByName(createProductDto.title, user);
+      if (existingProductWithTitle) {
+        throw new BadRequestException('Nombre ya creado para este usuario.');
+      }
+  
+      // Verificar si ya existe un producto con el mismo código de barras para este usuario (solo si el código de barras no está vacío)
+      if (barcode) {
+        const existingProductWithBarcode = await this.findByBarcodeAndUser(barcode, user);
+        if (existingProductWithBarcode) {
+          throw new BadRequestException('Código de barras ya creado para este usuario.');
+        }
+      }
+  
       const product = this.productRepository.create({
         ...createProductDto,
         barcode,
@@ -43,14 +57,12 @@ export class ProductsService {
   
       await this.productRepository.save(product);
   
-      // Llama a la función para calcular y actualizar el stock total después de crear el producto
-
-  
       return product;
     } catch (error) {
       this.handleDBExceptions(error);
     }
   }
+  
 
   findAll(paginationDto: PaginationDto, user: User) {
     const { limit = 10, offset = 0 } = paginationDto;
