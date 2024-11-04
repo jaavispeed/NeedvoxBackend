@@ -12,6 +12,7 @@ import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Product } from 'src/products/entities/product.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Lote } from 'src/lotes/entities/lotes.entity';
+import { ProductsService } from 'src/products/products.service';
 
 @Injectable()
 export class VentasService {
@@ -26,6 +27,8 @@ export class VentasService {
         private readonly productVentaRepository: Repository<ProductVenta>,
         @InjectRepository(Lote) // Asegúrate de inyectar el repositorio de Lote
         private readonly loteRepository: Repository<Lote>,
+        private readonly productsService: ProductsService, // Inyección del ProductsService
+
     ) {}
 
     async create(createVentaDto: CreateVentaDto, user: User): Promise<Venta> {
@@ -52,19 +55,19 @@ export class VentasService {
                     throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
                 }
     
-                // Obtener el lote correspondiente
-                const lote = await this.loteRepository.findOne({ where: { id: prod.loteId } });
-                if (!lote) {
-                    throw new NotFoundException(`Lote con ID ${prod.loteId} no encontrado.`);
-                }
+                // Buscar el lote correspondiente
+                const lote = await this.loteRepository.findOne({
+                    where: { producto: { id: prod.productId } },
+                    order: { fechaCreacion: "ASC" },
+                });
     
-                // Verificar si hay suficiente stock en el lote
-                if (lote.stock < prod.cantidad) {
-                    throw new BadRequestException(`No hay suficiente stock en el lote ${lote.id}.`);
-                }
+                console.log(`Stock en lote para el producto ${prod.productId}:`, lote?.stock);
     
-                // Restar del stock del lote
-                lote.stock -= prod.cantidad;
+                // Verificación de stock
+                if (!lote || lote.stock < prod.cantidad) {
+                    console.log(`Lote encontrado:`, lote);
+                    throw new NotFoundException(`No hay suficiente stock en el lote para el producto ${prod.productId}.`);
+                }
     
                 // Crear la relación del producto en la venta
                 const productVenta = this.productVentaRepository.create({
@@ -72,22 +75,31 @@ export class VentasService {
                     cantidad: prod.cantidad,
                     ventaPrice: prod.ventaPrice,
                     venta: venta,
-                    lote: lote, // Asignar el lote a la relación
                 });
     
+                // Sumar a la lista de productos de la venta
                 productosVenta.push(productVenta);
-                total += prod.ventaPrice * prod.cantidad;
-                venta.cantidadTotal += prod.cantidad;
+                total += prod.ventaPrice * prod.cantidad;  // Calcular el total de la venta
+                venta.cantidadTotal += prod.cantidad; // Acumular la cantidad total de productos
     
-                // Guardar la actualización del lote
-                await this.loteRepository.save(lote);
+                // Restar del stock del lote
+                lote.stock -= prod.cantidad; // Restar la cantidad vendida
+                await this.loteRepository.save(lote); // Guardar la actualización del lote
+    
+                // Actualizar el stockTotal del producto
+                const totalStock = await this.productsService.calculateTotalStock(product.id, user);
+                product.stockTotal = totalStock; // Asigna el stock total
+                await this.productRepository.save(product); // Guardar la actualización del producto
             }
     
-            venta.productos = productosVenta;
-            venta.total = total;
-    
+            // Guardar los productos de la venta en la base de datos
             await this.productVentaRepository.save(productosVenta);
-            await this.ventaRepository.save(venta);
+    
+            // Actualizar la venta con el total y la cantidad total de productos
+            venta.productos = productosVenta; // Asociar los productos a la venta
+            venta.total = total; // Establecer el total de la venta
+    
+            await this.ventaRepository.save(venta); // Guardar la venta
     
             console.log('Venta guardada con éxito:', venta);
             return venta;
@@ -96,6 +108,10 @@ export class VentasService {
             throw new InternalServerErrorException(`Error al crear la venta: ${error.message}`);
         }
     }
+    
+    
+    
+    
     
     
     

@@ -8,13 +8,15 @@ import { Product } from 'src/products/entities/product.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { ProductventaService } from './productventa.service';
 import { Lote } from 'src/lotes/entities/lotes.entity';
+import { ProductsModule } from 'src/products/products.module';
 
 @Module({
   providers: [VentasService, ProductventaService],
   controllers: [VentasController], // Solo el controlador combinado aquí
   imports: [
     AuthModule,
-    TypeOrmModule.forFeature([Venta, Product, User, ProductVenta, Lote])
+    TypeOrmModule.forFeature([Venta, Product, User, ProductVenta, Lote]),
+    ProductsModule
   ]
 })
 export class VentasModule {}
