@@ -72,21 +72,64 @@ export class LotesService {
   }
 
   async update(id: string, updateLoteDto: UpdateLoteDto, user: User): Promise<Lote> {
-    const lote = await this.loteRepository.preload({ id, user, ...updateLoteDto });
+    const lote = await this.loteRepository.findOne({ where: { id, user }, relations: ['producto'] });
 
     if (!lote) {
-      throw new NotFoundException('Lote no encontrado o no pertenece al usuario');
+        throw new NotFoundException('Lote no encontrado.');
     }
 
-    return this.loteRepository.save(lote);
-  }
+    // Actualiza el lote con los nuevos datos
+    const updatedLote = await this.loteRepository.save({
+        ...lote,
+        ...updateLoteDto,
+    });
+
+    // Asegúrate de que el producto esté correctamente asociado
+    if (!lote.producto) {
+        throw new NotFoundException('El lote no tiene un producto asociado.');
+    }
+
+    // Recalcula el stock total del producto
+    const product = lote.producto; // Usa el producto que ya tienes
+    product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
+
+    // Guarda el producto actualizado
+    await this.productRepository.save(product);
+
+    return updatedLote;
+}
+
+
+
+
 
   async remove(id: string, user: User): Promise<void> {
-    const lote = await this.findOne(id, user);
-    
+    const lote = await this.loteRepository.findOne({ where: { id, user } });
+
+    if (!lote) {
+        throw new NotFoundException('Lote no encontrado.');
+    }
+
+    // Obtén el producto asociado
+    const product = await this.productRepository.findOne({ where: { id: lote.producto.id } });
+
+    if (!product) {
+        throw new NotFoundException('Producto asociado no encontrado.');
+    }
+
+    // Eliminar el lote
     await this.loteRepository.remove(lote);
-    this.logger.log(`Lote con id ${id} ha sido eliminado exitosamente.`);
-  }
+
+    // Recalcular el stock total del producto
+    product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
+
+    // Guardar el producto actualizado
+    await this.productRepository.save(product);
+}
+
+
+
+
 
   async findAllByUser(user: User): Promise<Lote[]> {
     return await this.loteRepository.find({ where: { user } });

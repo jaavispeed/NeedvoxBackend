@@ -149,12 +149,18 @@ async remove(id: string, user: User): Promise<Product | null> {
   const product = await this.productRepository.findOne({ where: { id, user } });
   
   if (!product) {
-    throw new NotFoundException('Producto no encontrado.');
+      throw new NotFoundException('Producto no encontrado.');
   }
 
+  // Antes de eliminar el producto, recalcula el stock total
+  const stockTotal = await this.calculateTotalStock(product.id, user);
+  product.stockTotal = stockTotal; // Actualiza el stock total en el producto
+
+  // Elimina el producto
   await this.productRepository.remove(product);
   return product; // Devuelve el producto que fue eliminado
 }
+
 
 
   private handleDBExceptions(error: any) {
