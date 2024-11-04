@@ -103,29 +103,32 @@ export class LotesService {
 
 
 
-  async remove(id: string, user: User): Promise<void> {
-    const lote = await this.loteRepository.findOne({ where: { id, user } });
+async remove(id: string, user: User): Promise<void> {
+  const lote = await this.loteRepository.findOne({ 
+      where: { id, user }, 
+      relations: ['producto'] // Asegúrate de incluir la relación
+  });
 
-    if (!lote) {
-        throw new NotFoundException('Lote no encontrado.');
-    }
+  if (!lote) {
+      throw new NotFoundException('Lote no encontrado.');
+  }
 
-    // Obtén el producto asociado
-    const product = await this.productRepository.findOne({ where: { id: lote.producto.id } });
+  // Asegúrate de que lote.producto esté definido
+  if (!lote.producto) {
+      throw new NotFoundException('El lote no tiene un producto asociado.');
+  }
 
-    if (!product) {
-        throw new NotFoundException('Producto asociado no encontrado.');
-    }
+  // Eliminar el lote
+  await this.loteRepository.remove(lote);
 
-    // Eliminar el lote
-    await this.loteRepository.remove(lote);
+  // Recalcular el stock total del producto
+  const product = lote.producto; // Ya está cargado
+  product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
 
-    // Recalcular el stock total del producto
-    product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
-
-    // Guardar el producto actualizado
-    await this.productRepository.save(product);
+  // Guardar el producto actualizado
+  await this.productRepository.save(product);
 }
+
 
 
 
