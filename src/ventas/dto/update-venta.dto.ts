@@ -13,6 +13,10 @@ export class UpdateProductVentaDto {
     @IsOptional()
     @IsPositive()
     ventaPrice?: number; // Este es el precio unitario durante la venta
+
+    @IsOptional()
+    @IsUUID() // Asegúrate de que sea un UUID
+    loteId?: string; // Añadido para permitir la actualización del lote
 }
 
 export class UpdateVentaDto {

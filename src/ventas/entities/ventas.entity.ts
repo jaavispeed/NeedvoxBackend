@@ -1,4 +1,5 @@
 import { User } from 'src/auth/entities/user.entity';
+import { Lote } from 'src/lotes/entities/lotes.entity';
 import { Product } from 'src/products/entities/product.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
 
@@ -42,4 +43,7 @@ export class ProductVenta {
     
     @ManyToOne(() => Venta, (venta) => venta.productos, { nullable: false, onDelete: 'CASCADE' }) // Nullable false para forzar el valor
     venta: Venta;
+
+    @ManyToOne(() => Lote, (lote) => lote.id) // Relación con el Lote
+    lote: Lote; // Nueva propiedad para la relación con el Lote
 }
