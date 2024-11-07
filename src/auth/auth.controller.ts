@@ -33,6 +33,13 @@ export class AuthController {
   ){
     return this.authService.checkAuthStatus(user);
   }
+
+  @Get('perfil') // Endpoint para obtener perfil
+  @Auth()  
+  async getPerfil(@GetUser() user: User) {
+    return await this.authService.getUserById(user.id); 
+  }
+
   
   @Get('private')
   @Auth()
