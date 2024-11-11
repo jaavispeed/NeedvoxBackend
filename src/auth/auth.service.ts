@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { LoginUserDto, CreateUserDto } from './dto';
 import { JwtPayload } from './interfaces/jwt.payload.interface';
+import { UpdateUserDto } from './dto/updateUserDto';
 
 @Injectable()
 export class AuthService {
@@ -101,6 +102,22 @@ export class AuthService {
     await this.userRepository.save(userFromDB);
     
     return { message: 'Contraseña actualizada con éxito' };
+  }
+
+  async updateUserProfile(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const { username, email } = updateUserDto;
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+  
+    if (!user) {
+      throw new UnauthorizedException('User no encontrado');
+    }
+  
+    user.username = username ?? user.username;
+    user.email = email ?? user.email;
+  
+    await this.userRepository.save(user);
+  
+    return user;
   }
   
 }
