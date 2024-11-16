@@ -55,19 +55,28 @@ export class VentasService {
                     throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
                 }
     
-                // Buscar el lote correspondiente
-                const lote = await this.loteRepository.findOne({
+                // Buscar los lotes disponibles con stock suficiente para el producto
+                const lotes = await this.loteRepository.find({
                     where: { producto: { id: prod.productId } },
-                    order: { fechaCreacion: "ASC" },
+                    order: { fechaCreacion: 'ASC' }, // Ordenar por fecha de creación si lo prefieres
                 });
     
-                console.log(`Stock en lote para el producto ${prod.productId}:`, lote?.stock);
+                let loteSeleccionado = null;
     
-                // Verificación de stock
-                if (!lote || lote.stock < prod.cantidad) {
-                    console.log(`Lote encontrado:`, lote);
-                    throw new NotFoundException(`No hay suficiente stock en el lote para el producto ${prod.productId}.`);
+                // Buscar un lote con suficiente stock
+                for (const lote of lotes) {
+                    console.log(`Verificando lote ${lote.id} con stock: ${lote.stock}`);
+                    if (lote.stock >= prod.cantidad) {
+                        loteSeleccionado = lote;
+                        break; // Se detiene en el primer lote con stock suficiente
+                    }
                 }
+    
+                if (!loteSeleccionado) {
+                    throw new NotFoundException(`No hay suficiente stock disponible para el producto ${prod.productId} en ningún lote.`);
+                }
+    
+                console.log(`Lote seleccionado para el producto ${prod.productId}:`, loteSeleccionado);
     
                 // Crear la relación del producto en la venta
                 const productVenta = this.productVentaRepository.create({
@@ -82,9 +91,9 @@ export class VentasService {
                 total += prod.ventaPrice * prod.cantidad;  // Calcular el total de la venta
                 venta.cantidadTotal += prod.cantidad; // Acumular la cantidad total de productos
     
-                // Restar del stock del lote
-                lote.stock -= prod.cantidad; // Restar la cantidad vendida
-                await this.loteRepository.save(lote); // Guardar la actualización del lote
+                // Restar del stock del lote seleccionado
+                loteSeleccionado.stock -= prod.cantidad; // Restar la cantidad vendida
+                await this.loteRepository.save(loteSeleccionado); // Guardar la actualización del lote
     
                 // Actualizar el stockTotal del producto
                 const totalStock = await this.productsService.calculateTotalStock(product.id, user);
@@ -108,6 +117,7 @@ export class VentasService {
             throw new InternalServerErrorException(`Error al crear la venta: ${error.message}`);
         }
     }
+    
     
     
     
