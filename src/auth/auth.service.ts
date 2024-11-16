@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { LoginUserDto, CreateUserDto } from './dto';
 import { JwtPayload } from './interfaces/jwt.payload.interface';
+import { UpdateUserDto } from './dto/updateUserDto';
 
 @Injectable()
 export class AuthService {
@@ -66,6 +67,19 @@ export class AuthService {
     };
   }
 
+  async getUserById(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: { email: true, username: true, id: true } // Asegúrate de seleccionar los campos que necesitas
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return user;
+  }
+
   private getJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
@@ -76,4 +90,34 @@ export class AuthService {
     console.log(error);
     throw new InternalServerErrorException('Please check server logs');
   }
+
+  async changePassword(user: User, currentPassword: string, newPassword: string) {
+    const userFromDB = await this.userRepository.findOne({ where: { id: user.id } });
+    
+    if (!userFromDB || !bcrypt.compareSync(currentPassword, userFromDB.password)) {
+      throw new UnauthorizedException('La contraseña actual es incorrecta');
+    }
+  
+    userFromDB.password = bcrypt.hashSync(newPassword, 10);
+    await this.userRepository.save(userFromDB);
+    
+    return { message: 'Contraseña actualizada con éxito' };
+  }
+
+  async updateUserProfile(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const { username, email } = updateUserDto;
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+  
+    if (!user) {
+      throw new UnauthorizedException('User no encontrado');
+    }
+  
+    user.username = username ?? user.username;
+    user.email = email ?? user.email;
+  
+    await this.userRepository.save(user);
+  
+    return user;
+  }
+  
 }

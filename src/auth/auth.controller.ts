@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, SetMetadata,Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { CreateUserDto, LoginUserDto } from './dto';
@@ -9,6 +9,7 @@ import { UserRoleGuard } from './guards/user-role/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces';
 import { Auth } from './decorators';
+import { UpdateUserDto } from './dto/updateUserDto';
 
 
 @Controller('auth')
@@ -33,6 +34,13 @@ export class AuthController {
   ){
     return this.authService.checkAuthStatus(user);
   }
+
+  @Get('perfil') // Endpoint para obtener perfil
+  @Auth()  
+  async getPerfil(@GetUser() user: User) {
+    return await this.authService.getUserById(user.id); 
+  }
+
   
   @Get('private')
   @Auth()
@@ -56,5 +64,14 @@ export class AuthController {
       message: 'Hola mundo private',
       user,
     }
+  }
+
+  @Patch('update-profile')
+  @Auth()
+    async updateUserProfile(
+  @GetUser() user: User,
+  @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.authService.updateUserProfile(user.id, updateUserDto);
   }
 }
