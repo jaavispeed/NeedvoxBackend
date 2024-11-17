@@ -34,11 +34,19 @@ export class VentasService {
     async create(createVentaDto: CreateVentaDto, user: User): Promise<Venta> {
         console.log('Inicio de creación de venta:', createVentaDto);
     
+        // Validación de metodo_pago
+        const metodosValidos: ('EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')[] = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];
+        if (!metodosValidos.includes(createVentaDto.metodo_pago as 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')) {
+            throw new BadRequestException(`El método de pago ${createVentaDto.metodo_pago} no es válido.`);
+        }
+    
+        // Crear la venta en la base de datos
         const venta = await this.ventaRepository.save({
             user,
             cantidadTotal: 0,
             total: 0,
             fecha: new Date(),
+            metodo_pago: createVentaDto.metodo_pago,  // Asignar el metodo_pago correctamente
         });
     
         console.log('Venta creada con ID:', venta.id);
@@ -47,6 +55,7 @@ export class VentasService {
         let total = 0;
     
         try {
+            // Procesar los productos de la venta
             for (const prod of createVentaDto.productos) {
                 console.log('Procesando producto:', prod);
     
@@ -117,6 +126,7 @@ export class VentasService {
             throw new InternalServerErrorException(`Error al crear la venta: ${error.message}`);
         }
     }
+    
     
     
     
@@ -240,4 +250,26 @@ export class VentasService {
         console.error('Error en la base de datos:', error);
         throw new BadRequestException('Error al interactuar con la base de datos');
     }
+
+    async findByMetodoPago(metodoPago: string, user: User): Promise<Venta[]> {
+        // Verifica si el valor de metodoPago es uno de los valores válidos del enum
+        const metodosValidos: ('EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')[] = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];
+    
+        if (!metodosValidos.includes(metodoPago as 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')) {
+            throw new BadRequestException(`El método de pago ${metodoPago} no es válido.`);
+        }
+    
+        // Realiza la consulta con los filtros correctos
+        return this.ventaRepository.find({
+            where: {
+                user: { id: user.id }, // Filtrar por el ID del usuario para asegurar que sea el usuario correcto
+                metodo_pago: metodoPago as 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO', // Asegúrate de que metodo_pago sea del tipo adecuado
+            },
+            relations: ['productos', 'productos.product'], // Cargar relaciones necesarias
+        });
+    }
+    
+      
+
+    
 }

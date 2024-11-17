@@ -1,4 +1,4 @@
-import { IsArray, IsInt, IsPositive, IsUUID } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsPositive, IsUUID } from 'class-validator';
 
 export class CreateProductVentaDto {
     @IsUUID()
@@ -21,4 +21,8 @@ export class CreateVentaDto {
 
     @IsUUID()
     userId: string; // Si necesitas incluir el ID del usuario
+
+    // Agregar el campo metodo_pago con validación
+    @IsEnum(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'])
+    metodo_pago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO'; 
 }

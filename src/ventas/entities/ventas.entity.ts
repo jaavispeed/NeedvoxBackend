@@ -9,7 +9,7 @@ export class Venta {
     id: string;
 
     @Column('int')
-    cantidadTotal: number; // Total de productos (ej. 5 en el ejemplo de 3 Monster y 2 Redbull)
+    cantidadTotal: number; 
 
     @Column('numeric', { 
         default: 0 
@@ -24,6 +24,9 @@ export class Venta {
 
     @OneToMany(() => ProductVenta, (productVenta) => productVenta.venta)
     productos: ProductVenta[]; // Relación con productos en la venta
+
+    @Column('enum', { enum: ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'], default: 'OTRO' })
+    metodo_pago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO'; 
 }
 
 // Entidad intermedia para la relación de muchos a muchos

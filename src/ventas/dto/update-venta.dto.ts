@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsPositive, IsUUID } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsPositive, IsUUID } from 'class-validator';
 
 export class UpdateProductVentaDto {
     @IsOptional()
@@ -22,4 +22,9 @@ export class UpdateProductVentaDto {
 export class UpdateVentaDto {
     @IsOptional()
     productos?: UpdateProductVentaDto[];
+
+    // Agregar el campo metodo_pago con validación
+    @IsOptional()
+    @IsEnum(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'])
+    metodo_pago?: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO'; 
 }

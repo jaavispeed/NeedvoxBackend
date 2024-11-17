@@ -53,14 +53,24 @@ import {
     }
   
     @Get('fecha/:date')
-  @Auth() // Asegúrate de que el usuario esté autenticado
-  async findByDate(@Param('date') date: string, @Request() req): Promise<Venta[]> {
-    const user: User = req.user; // Obtén el usuario autenticado desde la solicitud
-    console.log('Usuario autenticado:', user);
-    return await this.ventasService.findByDate(date, user);
-  }
+    @Auth() // Asegúrate de que el usuario esté autenticado
+    async findByDate(@Param('date') date: string, @Request() req): Promise<Venta[]> {
+      const user: User = req.user; // Obtén el usuario autenticado desde la solicitud
+      console.log('Usuario autenticado:', user);
+      return await this.ventasService.findByDate(date, user);
+    }
     
+    @Get('metodo_pago/:metodoPago')
+    @Auth()
+    async findByMetodoPago(
+      @Param('metodoPago') metodoPago: string,
+      @Request() req,
+    ): Promise<Venta[]> {
+      const user: User = req.user;
+      return await this.ventasService.findByMetodoPago(metodoPago, user);
+    }
     
+
   
     @Auth()
     @Get()
