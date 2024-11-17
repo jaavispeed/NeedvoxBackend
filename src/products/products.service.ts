@@ -67,25 +67,29 @@ export class ProductsService {
   async findAll(paginationDto: PaginationDto, user: User) {
     const { limit = 10, offset = 0 } = paginationDto;
   
-    // Obtener los productos, pidiendo un producto adicional
     const products = await this.productRepository.find({
       where: { user },
-      take: limit + 1, // Pedimos un producto extra para verificar
-      skip: offset,
+      take: limit + 1, // Pedimos un producto extra para saber si hay más
+      skip: offset,    // Desplazamiento correcto
+      order: {
+        fechaCreacion: 'DESC', // Ordenamos por fechaCreacion de forma descendente
+      },
     });
   
-    // Verificar si hay más productos
     const hasMore = products.length > limit;
   
-    // Eliminar el producto extra si existe
-    if (hasMore) products.pop();
+    if (hasMore) products.pop(); // Elimina el producto extra
   
-    // Devolver los productos junto con el indicador `hasMore`
     return {
       data: products,
       hasMore,
     };
   }
+  
+  
+  
+  
+  
   
 
   async findOne(term: string, user: User) {
