@@ -26,6 +26,14 @@ import {
       private readonly ventasService: VentasService,
       private readonly productVentaService: ProductventaService,
     ) {}
+
+    @Get('resumen')
+    @Auth() // Aplica autenticación
+    async obtenerResumenVentas(@Request() req): Promise<{ ventasDiarias: number; ventasMensuales: number; ventasAnuales: number }> {
+        const user: User = req.user; // Usuario autenticado
+        return await this.ventasService.obtenerResumenVentas(user);
+    }
+    
   
     @Auth() // Aplica el guardia de autenticación
     @Post()

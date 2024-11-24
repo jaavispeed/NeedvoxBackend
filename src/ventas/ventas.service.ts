@@ -127,16 +127,6 @@ export class VentasService {
         }
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     async update(id: string, updateVentaDto: UpdateVentaDto, user: User): Promise<{ venta: Venta }> {
         console.log(`Actualizando venta con ID: ${id}`);
@@ -268,8 +258,44 @@ export class VentasService {
             relations: ['productos', 'productos.product'], // Cargar relaciones necesarias
         });
     }
+
+
+    async obtenerResumenVentas(user: User): Promise<{ ventasDiarias: number; ventasMensuales: number; ventasAnuales: number }> {
+        const hoy = new Date();
+        const inicioDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+        const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        const inicioAño = new Date(hoy.getFullYear(), 0, 1);
     
-      
+        const ventasDiarias = await this.ventaRepository.count({
+            where: {
+                user: { id: user.id },
+                fecha: Between(inicioDia, hoy),
+            },
+        });
+    
+        const ventasMensuales = await this.ventaRepository.count({
+            where: {
+                user: { id: user.id },
+                fecha: Between(inicioMes, hoy),
+            },
+        });
+    
+        const ventasAnuales = await this.ventaRepository.count({
+            where: {
+                user: { id: user.id },
+                fecha: Between(inicioAño, hoy),
+            },
+        });
+    
+        return {
+            ventasDiarias,
+            ventasMensuales,
+            ventasAnuales,
+        };
+    }
+    
+
+
 
     
 }
