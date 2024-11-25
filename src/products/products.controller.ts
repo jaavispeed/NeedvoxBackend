@@ -1,5 +1,3 @@
-import { PaginationDto } from '../common/dtos/pagination.dto';
-
 import {
   Controller,
   Get,
