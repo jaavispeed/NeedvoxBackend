@@ -5,7 +5,8 @@ import { UpdateLoteDto } from './dto/update-lote.dto';
 import { Lote } from './entities/lotes.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { PaginationDto } from '../common/dtos/pagination.dto';
+
 import { Auth } from 'src/auth/decorators';
 import { ProductsService } from 'src/products/products.service';
 

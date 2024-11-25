@@ -6,7 +6,7 @@ import { UpdateLoteDto } from './dto/update-lote.dto';
 import { Lote } from './entities/lotes.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Product } from 'src/products/entities/product.entity';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { PaginationDto } from '../common/dtos/pagination.dto';
 import { ProductsService } from 'src/products/products.service';
 
 @Injectable()
