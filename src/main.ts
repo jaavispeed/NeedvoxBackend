@@ -6,13 +6,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Configuración global de CORS
-  app.enableCors({
-    origin: '*', // Permite solicitudes desde este origen
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Métodos permitidos
-    credentials: true,
-  allowedHeaders:
-      'Origin, X-Requested-With, Content-Type, Accept, Authentication, Access-control-allow-credentials, Access-control-allow-headers, Access-control-allow-methods, Access-control-allow-origin, User-Agent, Referer, Accept-Encoding, Accept-Language, Access-Control-Request-Headers, Cache-Control, Pragma',
-  });
+app.enableCors({
+  origin: 'http://localhost:4200',  // Cambia esto por el dominio de tu frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // Métodos permitidos
+  allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authentication, Access-Control-Allow-Credentials',
+  credentials: true,  // Habilita el envío de cookies si es necesario
+});
+
 
   // Configuración global del prefijo de rutas
   app.setGlobalPrefix('api');
