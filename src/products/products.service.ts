@@ -12,7 +12,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
-import { PaginationDto } from '../common/dtos/pagination.dto';
+import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { validate as isUUID } from 'uuid';
 import { User } from 'src/auth/entities/user.entity';
 import { LotesService } from 'src/lotes/lotes.service';
