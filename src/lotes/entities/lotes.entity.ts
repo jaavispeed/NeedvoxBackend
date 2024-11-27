@@ -16,7 +16,7 @@ export class Lote {
   @Column()
   stock: number;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })  // Modificación: Permitir valores nulos
   fechaCaducidad: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }) // Fecha de creación
