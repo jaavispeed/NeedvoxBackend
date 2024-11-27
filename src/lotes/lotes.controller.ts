@@ -25,12 +25,8 @@ export class LotesController {
 
   @Post()
   async create(@Body() createLoteDto: CreateLoteDto, @GetUser() user: User): Promise<Lote> {
-    // Si la fecha no se proporciona, puedes asignar un valor por defecto o dejarla como null
-    createLoteDto.fechaCaducidad = createLoteDto.fechaCaducidad || null;
-  
     return this.lotesService.create(createLoteDto, user);
   }
-  
 
   @Get()
   async findAll(@Query() paginationDto: PaginationDto, @GetUser() user: User): Promise<Lote[]> {

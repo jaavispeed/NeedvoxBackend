@@ -13,9 +13,9 @@ export class CreateLoteDto {
   @IsNumber()
   stock: number; // Mantener este campo, ya que es importante para el lote
 
-  @IsOptional() // Este campo no es obligatorio
-  @IsDateString()
-  fechaCaducidad?: Date;
+  @IsOptional() // Es opcional, no se valida si está ausente
+  @IsDateString() // Validamos que sea una fecha cuando se proporciona
+  fechaCaducidad?: Date | null; // Puede ser null o Date
 
   @IsString()
   productId: string; // ID del producto asociado

@@ -26,28 +26,38 @@ export class LotesService {
   ) {}
 
   async create(createLoteDto: CreateLoteDto, user: User): Promise<Lote> {
+    // Busca el producto asociado al ID
     const product = await this.productRepository.findOne({ where: { id: createLoteDto.productId } });
 
+    // Si no se encuentra el producto, lanza una excepción
     if (!product) {
         throw new NotFoundException('Producto no encontrado.');
     }
 
+    // Si no se proporciona fechaCaducidad, asigna null
+    const fechaCaducidad = createLoteDto.fechaCaducidad ? createLoteDto.fechaCaducidad : null;
+
+    // Crea el objeto de lote con los datos proporcionados
     const lote = this.loteRepository.create({
         ...createLoteDto,
-        producto: product,
+        fechaCaducidad,  // Asegúrate de que la fechaCaducidad esté correctamente manejada
+        producto: product, // Asocia el producto
         user, // Asocia el lote al usuario
     });
 
+    // Guarda el lote en la base de datos
     const savedLote = await this.loteRepository.save(lote);
 
     // Actualiza el stock total del producto
     const stockTotal = await this.productsService.calculateTotalStock(product.id, user);
-    product.stockTotal = stockTotal; // Actualiza el stockTotal en el objeto producto
+    product.stockTotal = stockTotal;
 
-    await this.productRepository.save(product); // Guarda el producto actualizado
+    // Guarda el producto actualizado
+    await this.productRepository.save(product);
 
     return savedLote;
 }
+
 
 
 
@@ -72,25 +82,30 @@ export class LotesService {
   }
 
   async update(id: string, updateLoteDto: UpdateLoteDto, user: User): Promise<Lote> {
+    // Busca el lote a actualizar, incluyendo su relación con el producto
     const lote = await this.loteRepository.findOne({ where: { id, user }, relations: ['producto'] });
 
     if (!lote) {
         throw new NotFoundException('Lote no encontrado.');
     }
 
-    // Actualiza el lote con los nuevos datos
-    const updatedLote = await this.loteRepository.save({
-        ...lote,
-        ...updateLoteDto,
-    });
-
-    // Asegúrate de que el producto esté correctamente asociado
-    if (!lote.producto) {
-        throw new NotFoundException('El lote no tiene un producto asociado.');
+    // Si se proporciona `fechaCaducidad` (incluyendo `null`), actualízala
+    if (updateLoteDto.fechaCaducidad === null) {
+        lote.fechaCaducidad = null;
+    } else if (updateLoteDto.fechaCaducidad) {
+        lote.fechaCaducidad = updateLoteDto.fechaCaducidad;
     }
 
-    // Recalcula el stock total del producto
-    const product = lote.producto; // Usa el producto que ya tienes
+    // Actualiza los demás campos, solo si se han proporcionado
+    lote.precioCompra = updateLoteDto.precioCompra ?? lote.precioCompra;
+    lote.precioVenta = updateLoteDto.precioVenta ?? lote.precioVenta;
+    lote.stock = updateLoteDto.stock ?? lote.stock;
+
+    // Guarda el lote con los cambios
+    const updatedLote = await this.loteRepository.save(lote);
+
+    // Recalcula el stock total del producto asociado
+    const product = lote.producto;
     product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
 
     // Guarda el producto actualizado
@@ -98,6 +113,7 @@ export class LotesService {
 
     return updatedLote;
 }
+
 
 
 
