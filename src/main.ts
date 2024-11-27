@@ -7,7 +7,7 @@ async function bootstrap() {
 
   // Configuración global de CORS
 app.enableCors({
-  origin: '*',  // Cambia esto por el dominio de tu frontend
+  origin: 'https://needvox.vercel.app/',  // Cambia esto por el dominio de tu frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],  // Métodos permitidos
   allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authentication, Access-Control-Allow-Credentials, Authorization',
   credentials: true,  // Habilita el envío de cookies si es necesario
