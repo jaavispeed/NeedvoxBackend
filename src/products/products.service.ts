@@ -16,6 +16,8 @@ import { PaginationDto } from '../common/dtos/pagination.dto';
 import { validate as isUUID } from 'uuid';
 import { User } from 'src/auth/entities/user.entity';
 import { LotesService } from 'src/lotes/lotes.service';
+import { toZonedTime } from 'date-fns-tz';
+
 
 @Injectable()
 export class ProductsService {
@@ -41,7 +43,7 @@ export class ProductsService {
         throw new BadRequestException('Nombre ya creado para este usuario.');
       }
   
-      // Verificar si ya existe un producto con el mismo código de barras para este usuario (solo si el código de barras no está vacío)
+      // Verificar si ya existe un producto con el mismo código de barras para este usuario
       if (barcode) {
         const existingProductWithBarcode = await this.findByBarcodeAndUser(barcode, user);
         if (existingProductWithBarcode) {
@@ -49,12 +51,21 @@ export class ProductsService {
         }
       }
   
+      // Obtener la fecha actual en UTC
+      const currentDate = new Date();
+  
+      // Convertir la fecha UTC a la zona horaria de Chile (America/Santiago)
+      const chileTime = toZonedTime(currentDate, 'America/Santiago');
+  
+      // Crear el producto y asignar la fecha con la zona horaria de Chile
       const product = this.productRepository.create({
         ...createProductDto,
         barcode,
         user,
+        fechaCreacion: chileTime, // Asigna la fecha con la zona horaria de Chile
       });
   
+      // Guardar el producto
       await this.productRepository.save(product);
   
       return product;
@@ -62,6 +73,9 @@ export class ProductsService {
       this.handleDBExceptions(error);
     }
   }
+  
+  
+  
   
 
   async findAll(paginationDto: PaginationDto, user: User) {

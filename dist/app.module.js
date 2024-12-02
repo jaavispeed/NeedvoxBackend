@@ -32,6 +32,7 @@ exports.AppModule = AppModule = __decorate([
                 password: process.env.DB_PASSWORD,
                 autoLoadEntities: true,
                 synchronize: true,
+                ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
             }),
             products_module_1.ProductsModule,
             common_module_1.CommonModule,

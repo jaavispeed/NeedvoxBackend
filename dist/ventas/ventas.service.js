@@ -21,6 +21,7 @@ const product_entity_1 = require("../products/entities/product.entity");
 const user_entity_1 = require("../auth/entities/user.entity");
 const lotes_entity_1 = require("../lotes/entities/lotes.entity");
 const products_service_1 = require("../products/products.service");
+const date_fns_tz_1 = require("date-fns-tz");
 let VentasService = class VentasService {
     constructor(ventaRepository, productRepository, userRepository, productVentaRepository, loteRepository, productsService) {
         this.ventaRepository = ventaRepository;
@@ -32,15 +33,17 @@ let VentasService = class VentasService {
     }
     async create(createVentaDto, user) {
         console.log('Inicio de creación de venta:', createVentaDto);
+        const timeZone = 'America/Santiago';
         const metodosValidos = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];
         if (!metodosValidos.includes(createVentaDto.metodo_pago)) {
             throw new common_1.BadRequestException(`El método de pago ${createVentaDto.metodo_pago} no es válido.`);
         }
+        const fechaLocal = (0, date_fns_tz_1.toZonedTime)(new Date(), timeZone);
         const venta = await this.ventaRepository.save({
             user,
             cantidadTotal: 0,
             total: 0,
-            fecha: new Date(),
+            fecha: fechaLocal,
             metodo_pago: createVentaDto.metodo_pago,
         });
         console.log('Venta creada con ID:', venta.id);
@@ -142,20 +145,28 @@ let VentasService = class VentasService {
         console.log(`Venta con ID ${id} eliminada con éxito.`);
     }
     async findByDate(date, user) {
-        const startDate = new Date(`${date}T00:00:00.000Z`);
-        startDate.setHours(startDate.getHours() - 3);
-        const endDate = new Date(`${date}T23:59:59.999Z`);
-        endDate.setHours(endDate.getHours() - 3);
-        console.log('Consultando ventas desde:', startDate.toISOString(), 'hasta:', endDate.toISOString(), 'para el usuario:', user.id);
+        const timeZone = 'America/Santiago';
+        const startDate = new Date(`${date}T00:00:00.000`);
+        const endDate = new Date(`${date}T23:59:59.999`);
+        const startDateLocal = (0, date_fns_tz_1.toZonedTime)(startDate, timeZone);
+        const endDateLocal = (0, date_fns_tz_1.toZonedTime)(endDate, timeZone);
+        console.log('Consultando ventas desde:', startDateLocal.toISOString(), 'hasta:', endDateLocal.toISOString(), 'para el usuario:', user.id);
         const ventas = await this.ventaRepository.find({
             where: {
-                fecha: (0, typeorm_2.Between)(startDate, endDate),
+                fecha: (0, typeorm_2.Between)(startDateLocal, endDateLocal),
                 user: { id: user.id },
             },
             relations: ['productos', 'productos.product'],
         });
-        console.log('Ventas encontradas:', ventas);
-        return ventas;
+        const ventasConFechasLocales = ventas.map(venta => {
+            const fechaLocal = (0, date_fns_tz_1.toZonedTime)(venta.fecha, timeZone);
+            return {
+                ...venta,
+                fecha: fechaLocal,
+            };
+        });
+        console.log('Ventas encontradas con fechas locales:', ventasConFechasLocales);
+        return ventasConFechasLocales;
     }
     async findAll(user) {
         console.log(`Buscando todas las ventas para el usuario con ID: ${user.id}`);
@@ -163,12 +174,16 @@ let VentasService = class VentasService {
             where: { user },
             relations: ['productos', 'productos.product'],
         });
-        console.log(`Ventas encontradas:`, ventas);
-        return ventas;
-    }
-    handleDBExceptions(error) {
-        console.error('Error en la base de datos:', error);
-        throw new common_1.BadRequestException('Error al interactuar con la base de datos');
+        const timeZone = 'America/Santiago';
+        const ventasConFechasLocales = ventas.map(venta => {
+            const fechaLocal = (0, date_fns_tz_1.toZonedTime)(venta.fecha, timeZone);
+            return {
+                ...venta,
+                fecha: fechaLocal,
+            };
+        });
+        console.log(`Ventas encontradas con fechas locales:`, ventasConFechasLocales);
+        return ventasConFechasLocales;
     }
     async findByMetodoPago(metodoPago, user) {
         const metodosValidos = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];

@@ -21,7 +21,6 @@ export declare class VentasService {
     remove(id: string, user: User): Promise<void>;
     findByDate(date: string, user: User): Promise<Venta[]>;
     findAll(user: User): Promise<Venta[]>;
-    private handleDBExceptions;
     findByMetodoPago(metodoPago: string, user: User): Promise<Venta[]>;
     obtenerResumenVentas(user: User): Promise<{
         ventasDiarias: number;

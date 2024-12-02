@@ -19,6 +19,7 @@ const typeorm_2 = require("typeorm");
 const product_entity_1 = require("./entities/product.entity");
 const uuid_1 = require("uuid");
 const lotes_service_1 = require("../lotes/lotes.service");
+const date_fns_tz_1 = require("date-fns-tz");
 let ProductsService = class ProductsService {
     constructor(productRepository, lotesService) {
         this.productRepository = productRepository;
@@ -38,10 +39,13 @@ let ProductsService = class ProductsService {
                     throw new common_1.BadRequestException('Código de barras ya creado para este usuario.');
                 }
             }
+            const currentDate = new Date();
+            const chileTime = (0, date_fns_tz_1.toZonedTime)(currentDate, 'America/Santiago');
             const product = this.productRepository.create({
                 ...createProductDto,
                 barcode,
                 user,
+                fechaCreacion: chileTime,
             });
             await this.productRepository.save(product);
             return product;

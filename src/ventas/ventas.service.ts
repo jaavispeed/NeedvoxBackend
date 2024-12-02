@@ -13,6 +13,8 @@ import { Product } from 'src/products/entities/product.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Lote } from 'src/lotes/entities/lotes.entity';
 import { ProductsService } from 'src/products/products.service';
+import { format, toZonedTime } from 'date-fns-tz';
+
 
 @Injectable()
 export class VentasService {
@@ -34,18 +36,24 @@ export class VentasService {
     async create(createVentaDto: CreateVentaDto, user: User): Promise<Venta> {
         console.log('Inicio de creación de venta:', createVentaDto);
     
+        // Zona horaria de Chile
+        const timeZone = 'America/Santiago';
+    
         // Validación de metodo_pago
         const metodosValidos: ('EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')[] = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];
         if (!metodosValidos.includes(createVentaDto.metodo_pago as 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')) {
             throw new BadRequestException(`El método de pago ${createVentaDto.metodo_pago} no es válido.`);
         }
     
-        // Crear la venta en la base de datos
+        // Convertir la fecha actual a la zona horaria de Chile
+        const fechaLocal = toZonedTime(new Date(), timeZone);  // Obtener la fecha local en la zona horaria de Chile
+    
+        // Crear la venta en la base de datos con la fecha ajustada
         const venta = await this.ventaRepository.save({
             user,
             cantidadTotal: 0,
             total: 0,
-            fecha: new Date(),
+            fecha: fechaLocal, // Fecha ajustada a la zona horaria de Chile
             metodo_pago: createVentaDto.metodo_pago,  // Asignar el metodo_pago correctamente
         });
     
@@ -120,13 +128,12 @@ export class VentasService {
             await this.ventaRepository.save(venta); // Guardar la venta
     
             console.log('Venta guardada con éxito:', venta);
-            return venta;
+            return venta; // Aquí no se cambia la fecha, se mantiene como tipo Date
         } catch (error) {
             console.error('Error al crear la venta:', error);
             throw new InternalServerErrorException(`Error al crear la venta: ${error.message}`);
         }
     }
-    
 
     async update(id: string, updateVentaDto: UpdateVentaDto, user: User): Promise<{ venta: Venta }> {
         console.log(`Actualizando venta con ID: ${id}`);
@@ -198,49 +205,69 @@ export class VentasService {
     }
 
     async findByDate(date: string, user: User): Promise<Venta[]> {
-        // Establece la fecha de inicio para el 19 de octubre de 2024
-        const startDate = new Date(`${date}T00:00:00.000Z`); // '2024-10-19T00:00:00.000Z'
-        // Ajusta a UTC-3 para la fecha de inicio
-        startDate.setHours(startDate.getHours() - 3); // Esto dará '2024-10-18T21:00:00.000Z'
+        // Zona horaria de Chile
+        const timeZone = 'America/Santiago'; 
     
-        // Establece la fecha de fin para el 19 de octubre de 2024
-        const endDate = new Date(`${date}T23:59:59.999Z`); // '2024-10-19T23:59:59.999Z'
-        // Ajusta a UTC-3 para la fecha de fin
-        endDate.setHours(endDate.getHours() - 3); // Esto dará '2024-10-19T20:59:59.999Z'
+        // Establecer la fecha de inicio y fin para el rango de búsqueda en la zona horaria local
+        const startDate = new Date(`${date}T00:00:00.000`);
+        const endDate = new Date(`${date}T23:59:59.999`);
     
-        console.log('Consultando ventas desde:', startDate.toISOString(), 'hasta:', endDate.toISOString(), 'para el usuario:', user.id);
+        // Ajustar las fechas a la zona horaria local
+        const startDateLocal = toZonedTime(startDate, timeZone);
+        const endDateLocal = toZonedTime(endDate, timeZone);
     
+        console.log('Consultando ventas desde:', startDateLocal.toISOString(), 'hasta:', endDateLocal.toISOString(), 'para el usuario:', user.id);
+        
+        // Consultar las ventas por fecha y usuario
         const ventas = await this.ventaRepository.find({
             where: {
-                fecha: Between(startDate, endDate), // Rango de fechas en UTC
-                user: { id: user.id }, // Filtra por el ID del usuario
+                fecha: Between(startDateLocal, endDateLocal),
+                user: { id: user.id },
             },
             relations: ['productos', 'productos.product'],
         });
     
-        console.log('Ventas encontradas:', ventas);
-        return ventas;
+        // Convertir las fechas de UTC a la zona horaria local
+        const ventasConFechasLocales = ventas.map(venta => {
+            const fechaLocal = toZonedTime(venta.fecha, timeZone); 
+            return {
+                ...venta,
+                fecha: fechaLocal, // Asignar la fecha convertida
+            };
+        });
+    
+        console.log('Ventas encontradas con fechas locales:', ventasConFechasLocales);
+        return ventasConFechasLocales;
     }
+    
+    
+    
     
 
     async findAll(user: User): Promise<Venta[]> {
         console.log(`Buscando todas las ventas para el usuario con ID: ${user.id}`);
-
+    
+        // Obtener todas las ventas del usuario
         const ventas = await this.ventaRepository.find({
             where: { user },
             relations: ['productos', 'productos.product'],
         });
-
-        console.log(`Ventas encontradas:`, ventas);
-        return ventas;
+    
+        // Zona horaria de Chile
+        const timeZone = 'America/Santiago';
+    
+        // Convertir las fechas de UTC a la zona horaria de Chile
+        const ventasConFechasLocales = ventas.map(venta => {
+            const fechaLocal = toZonedTime(venta.fecha, timeZone); 
+            return {
+                ...venta,
+                fecha: fechaLocal, // Devolver la fecha como Date ajustada a la zona horaria de Chile
+            };
+        });
+    
+        console.log(`Ventas encontradas con fechas locales:`, ventasConFechasLocales);
+        return ventasConFechasLocales;
     }
-
-    private handleDBExceptions(error: any): void {
-        // Maneja errores relacionados a la base de datos
-        console.error('Error en la base de datos:', error);
-        throw new BadRequestException('Error al interactuar con la base de datos');
-    }
-
     async findByMetodoPago(metodoPago: string, user: User): Promise<Venta[]> {
         // Verifica si el valor de metodoPago es uno de los valores válidos del enum
         const metodosValidos: ('EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')[] = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];

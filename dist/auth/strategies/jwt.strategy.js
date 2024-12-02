@@ -23,7 +23,7 @@ const user_entity_1 = require("../entities/user.entity");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor(userRepository, configService) {
         super({
-            secretOrKey: configService.get('JWT_SECRET'),
+            secretOrKey: process.env.JWT_SECRET,
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
         });
         this.userRepository = userRepository;

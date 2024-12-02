@@ -31,8 +31,10 @@ let LotesService = class LotesService {
         if (!product) {
             throw new common_1.NotFoundException('Producto no encontrado.');
         }
+        const fechaCaducidad = createLoteDto.fechaCaducidad ? createLoteDto.fechaCaducidad : null;
         const lote = this.loteRepository.create({
             ...createLoteDto,
+            fechaCaducidad,
             producto: product,
             user,
         });
@@ -62,13 +64,16 @@ let LotesService = class LotesService {
         if (!lote) {
             throw new common_1.NotFoundException('Lote no encontrado.');
         }
-        const updatedLote = await this.loteRepository.save({
-            ...lote,
-            ...updateLoteDto,
-        });
-        if (!lote.producto) {
-            throw new common_1.NotFoundException('El lote no tiene un producto asociado.');
+        if (updateLoteDto.fechaCaducidad === null) {
+            lote.fechaCaducidad = null;
         }
+        else if (updateLoteDto.fechaCaducidad) {
+            lote.fechaCaducidad = updateLoteDto.fechaCaducidad;
+        }
+        lote.precioCompra = updateLoteDto.precioCompra ?? lote.precioCompra;
+        lote.precioVenta = updateLoteDto.precioVenta ?? lote.precioVenta;
+        lote.stock = updateLoteDto.stock ?? lote.stock;
+        const updatedLote = await this.loteRepository.save(lote);
         const product = lote.producto;
         product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
         await this.productRepository.save(product);
