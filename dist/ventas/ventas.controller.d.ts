@@ -8,9 +8,18 @@ export declare class VentasController {
     private readonly productVentaService;
     constructor(ventasService: VentasService, productVentaService: ProductventaService);
     obtenerResumenVentas(req: any): Promise<{
-        ventasDiarias: number;
-        ventasMensuales: number;
-        ventasAnuales: number;
+        ventasDiarias: {
+            total: number;
+            suma: number;
+        };
+        ventasMensuales: {
+            total: number;
+            suma: number;
+        };
+        ventasAnuales: {
+            total: number;
+            suma: number;
+        };
     }>;
     create(createVentaDto: CreateVentaDto, req: any): Promise<Venta>;
     update(id: string, updateVentaDto: UpdateVentaDto, req: any): Promise<{

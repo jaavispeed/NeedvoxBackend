@@ -24,8 +24,17 @@ export declare class VentasService {
     private handleDBExceptions;
     findByMetodoPago(metodoPago: string, user: User): Promise<Venta[]>;
     obtenerResumenVentas(user: User): Promise<{
-        ventasDiarias: number;
-        ventasMensuales: number;
-        ventasAnuales: number;
+        ventasDiarias: {
+            total: number;
+            suma: number;
+        };
+        ventasMensuales: {
+            total: number;
+            suma: number;
+        };
+        ventasAnuales: {
+            total: number;
+            suma: number;
+        };
     }>;
 }

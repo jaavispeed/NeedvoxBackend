@@ -29,10 +29,15 @@ import {
 
     @Get('resumen')
     @Auth() // Aplica autenticación
-    async obtenerResumenVentas(@Request() req): Promise<{ ventasDiarias: number; ventasMensuales: number; ventasAnuales: number }> {
+    async obtenerResumenVentas(@Request() req): Promise<{
+        ventasDiarias: { total: number; suma: number };
+        ventasMensuales: { total: number; suma: number };
+        ventasAnuales: { total: number; suma: number };
+    }> {
         const user: User = req.user; // Usuario autenticado
         return await this.ventasService.obtenerResumenVentas(user);
     }
+    
     
   
     @Auth() // Aplica el guardia de autenticación

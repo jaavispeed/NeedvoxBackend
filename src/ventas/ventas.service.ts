@@ -260,38 +260,49 @@ export class VentasService {
     }
 
 
-    async obtenerResumenVentas(user: User): Promise<{ ventasDiarias: number; ventasMensuales: number; ventasAnuales: number }> {
+    async obtenerResumenVentas(user: User): Promise<{
+        ventasDiarias: { total: number; suma: number };
+        ventasMensuales: { total: number; suma: number };
+        ventasAnuales: { total: number; suma: number };
+    }> {
         const hoy = new Date();
         const inicioDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
         const inicioAño = new Date(hoy.getFullYear(), 0, 1);
-
-        const ventasDiarias = await this.ventaRepository.count({
+    
+        // Ventas diarias
+        const ventasDiarias = await this.ventaRepository.find({
             where: {
                 user: { id: user.id },
                 fecha: Between(inicioDia, hoy),
             },
         });
-
-        const ventasMensuales = await this.ventaRepository.count({
+        const sumaDiaria = ventasDiarias.reduce((sum, venta) => sum + Number(venta.total), 0);
+    
+        // Ventas mensuales
+        const ventasMensuales = await this.ventaRepository.find({
             where: {
                 user: { id: user.id },
                 fecha: Between(inicioMes, hoy),
             },
         });
-
-        const ventasAnuales = await this.ventaRepository.count({
+        const sumaMensual = ventasMensuales.reduce((sum, venta) => sum + Number(venta.total), 0);
+    
+        // Ventas anuales
+        const ventasAnuales = await this.ventaRepository.find({
             where: {
                 user: { id: user.id },
                 fecha: Between(inicioAño, hoy),
             },
         });
-
+        const sumaAnual = ventasAnuales.reduce((sum, venta) => sum + Number(venta.total), 0);
+    
         return {
-            ventasDiarias,
-            ventasMensuales,
-            ventasAnuales,
+            ventasDiarias: { total: ventasDiarias.length, suma: sumaDiaria },
+            ventasMensuales: { total: ventasMensuales.length, suma: sumaMensual },
+            ventasAnuales: { total: ventasAnuales.length, suma: sumaAnual },
         };
     }
+    
 
 }
