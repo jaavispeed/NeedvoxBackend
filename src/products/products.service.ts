@@ -65,7 +65,10 @@ export class ProductsService {
   
 
   async findAll(paginationDto: PaginationDto, user: User) {
-    const { limit = 10, offset = 0 } = paginationDto;
+    const { offset = 0 } = paginationDto;  // Eliminamos el límite o lo dejamos fijo a 1000
+    
+    // Fijamos un límite máximo de 1000 productos
+    const limit = 1000;
   
     const products = await this.productRepository.find({
       where: { user },
@@ -77,7 +80,7 @@ export class ProductsService {
     });
   
     const hasMore = products.length > limit;
-  
+    
     if (hasMore) products.pop(); // Elimina el producto extra
   
     return {
@@ -86,10 +89,7 @@ export class ProductsService {
     };
   }
   
-  
-  
-  
-  
+
   
 
   async findOne(term: string, user: User) {
@@ -215,12 +215,16 @@ async remove(id: string, user: User): Promise<Product | null> {
     return count;
   }
 
-  findAllAdmin(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAllAdmin(paginationDto: PaginationDto) {
+    const { offset = 0 } = paginationDto;
+  
+    // Fijamos un límite máximo de 1000 productos
+    const limit = 1000;
   
     return this.productRepository.find({
       take: limit,
       skip: offset,
     });
   }
+  
 }

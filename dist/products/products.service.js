@@ -51,7 +51,8 @@ let ProductsService = class ProductsService {
         }
     }
     async findAll(paginationDto, user) {
-        const { limit = 10, offset = 0 } = paginationDto;
+        const { offset = 0 } = paginationDto;
+        const limit = 1000;
         const products = await this.productRepository.find({
             where: { user },
             take: limit + 1,
@@ -155,8 +156,9 @@ let ProductsService = class ProductsService {
         console.log(`Cantidad de productos para el usuario ${userId}: ${count}`);
         return count;
     }
-    findAllAdmin(paginationDto) {
-        const { limit = 10, offset = 0 } = paginationDto;
+    async findAllAdmin(paginationDto) {
+        const { offset = 0 } = paginationDto;
+        const limit = 1000;
         return this.productRepository.find({
             take: limit,
             skip: offset,
