@@ -9,7 +9,7 @@ export class ProductventaService {
   constructor(
     @InjectRepository(ProductVenta)
     private readonly productVentaRepository: Repository<ProductVenta>,
-  ) {}
+  ) { }
 
   async obtenerTodos(): Promise<ProductVenta[]> {
     return this.productVentaRepository.find({ relations: ['product', 'venta'] }); // Obtener todas las relaciones
