@@ -192,47 +192,45 @@ async findAllByProduct(productId: string, user: User): Promise<Lote[]> {
 }
 
 
-async obtenerEstadisticas(user: User, tipo: 'dia' | 'mes' | 'año') {
+async obtenerEstadisticas(user: User) {
   try {
-    let truncDate;
-    let dateFilter;
-    
-    // Definimos cómo truncar la fecha según el tipo
-    switch (tipo) {
-      case 'mes':
-        truncDate = 'month';  // Agrupamos por mes
-        dateFilter = "EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)"; // Solo lotes de este año
-        break;
-      case 'año':
-        truncDate = 'year';   // Agrupamos por año
-        dateFilter = "EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)"; // Solo lotes de este año
-        break;
-      case 'dia':
-      default:
-        truncDate = 'day';  // Agrupamos por día
-        dateFilter = "DATE(lote.fechaCreacion) = CURRENT_DATE"; // Solo lotes creados hoy
-        break;
-    }
-
-    // Obtenemos las estadísticas con el precio de compra sumado
-    const estadisticas = await this.loteRepository
+    // Obtención de estadísticas por día
+    const gastosDia = await this.loteRepository
       .createQueryBuilder('lote')
-      .select([ 
-        `DATE_TRUNC('${truncDate}', lote.fechaCreacion) AS fecha`,  // Agrupamos según el tipo (día, mes, año)
-        'SUM(lote.precioCompra) AS totalCompra'  // Sumamos los precios de compra
-      ])
+      .select('SUM(lote.precioCompra)', 'totalCompra')
       .where('lote.userId = :userId', { userId: user.id })
-      .andWhere(dateFilter)  // Aplicamos el filtro adecuado según el tipo
-      .groupBy('fecha')  // Agrupamos por fecha truncada
-      .orderBy('fecha', 'DESC')  // Ordenamos por fecha en orden descendente
-      .getRawMany();  // Obtenemos los resultados
+      .andWhere("DATE(lote.fechaCreacion) = CURRENT_DATE")
+      .getRawOne();
 
-    return { estadisticas };
+    // Obtención de estadísticas por mes
+    const gastosMes = await this.loteRepository
+      .createQueryBuilder('lote')
+      .select('SUM(lote.precioCompra)', 'totalCompra')
+      .where('lote.userId = :userId', { userId: user.id })
+      .andWhere("EXTRACT(MONTH FROM lote.fechaCreacion) = EXTRACT(MONTH FROM CURRENT_DATE)")
+      .andWhere("EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)")
+      .getRawOne();
+
+    // Obtención de estadísticas por año
+    const gastosAnio = await this.loteRepository
+      .createQueryBuilder('lote')
+      .select('SUM(lote.precioCompra)', 'totalCompra')
+      .where('lote.userId = :userId', { userId: user.id })
+      .andWhere("EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)")
+      .getRawOne();
+
+    return {
+      gastosDia: gastosDia?.totalCompra || 0,
+      gastosMes: gastosMes?.totalCompra || 0,
+      gastosAnio: gastosAnio?.totalCompra || 0,
+    };
   } catch (error) {
     this.logger.error('Error al obtener estadísticas', error.stack);
     throw new Error('Error interno al calcular estadísticas.');
   }
 }
+
+
 
 
 

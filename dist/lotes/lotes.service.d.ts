@@ -4,7 +4,7 @@ import { UpdateLoteDto } from './dto/update-lote.dto';
 import { Lote } from './entities/lotes.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Product } from 'src/products/entities/product.entity';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { PaginationDto } from '../common/dtos/pagination.dto';
 import { ProductsService } from 'src/products/products.service';
 export declare class LotesService {
     private readonly loteRepository;
@@ -20,7 +20,9 @@ export declare class LotesService {
     findAllByUser(user: User): Promise<Lote[]>;
     findAllByProductAndUser(productId: string, user: User): Promise<Lote[]>;
     findAllByProduct(productId: string, user: User): Promise<Lote[]>;
-    obtenerEstadisticas(user: User, tipo: 'dia' | 'mes' | 'año'): Promise<{
-        estadisticas: any[];
+    obtenerEstadisticas(user: User): Promise<{
+        gastosDia: any;
+        gastosMes: any;
+        gastosAnio: any;
     }>;
 }

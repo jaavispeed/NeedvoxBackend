@@ -30,6 +30,7 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateLoteDto.prototype, "stock", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", Date)
 ], CreateLoteDto.prototype, "fechaCaducidad", void 0);

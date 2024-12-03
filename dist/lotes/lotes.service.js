@@ -31,8 +31,10 @@ let LotesService = class LotesService {
         if (!product) {
             throw new common_1.NotFoundException('Producto no encontrado.');
         }
+        const fechaCaducidad = createLoteDto.fechaCaducidad ? createLoteDto.fechaCaducidad : null;
         const lote = this.loteRepository.create({
             ...createLoteDto,
+            fechaCaducidad,
             producto: product,
             user,
         });
@@ -62,13 +64,16 @@ let LotesService = class LotesService {
         if (!lote) {
             throw new common_1.NotFoundException('Lote no encontrado.');
         }
-        const updatedLote = await this.loteRepository.save({
-            ...lote,
-            ...updateLoteDto,
-        });
-        if (!lote.producto) {
-            throw new common_1.NotFoundException('El lote no tiene un producto asociado.');
+        if (updateLoteDto.fechaCaducidad === null) {
+            lote.fechaCaducidad = null;
         }
+        else if (updateLoteDto.fechaCaducidad) {
+            lote.fechaCaducidad = updateLoteDto.fechaCaducidad;
+        }
+        lote.precioCompra = updateLoteDto.precioCompra ?? lote.precioCompra;
+        lote.precioVenta = updateLoteDto.precioVenta ?? lote.precioVenta;
+        lote.stock = updateLoteDto.stock ?? lote.stock;
+        const updatedLote = await this.loteRepository.save(lote);
         const product = lote.producto;
         product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
         await this.productRepository.save(product);
@@ -121,37 +126,32 @@ let LotesService = class LotesService {
             throw new Error('No se pudieron encontrar los lotes.');
         }
     }
-    async obtenerEstadisticas(user, tipo) {
+    async obtenerEstadisticas(user) {
         try {
-            let truncDate;
-            let dateFilter;
-            switch (tipo) {
-                case 'mes':
-                    truncDate = 'month';
-                    dateFilter = "EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)";
-                    break;
-                case 'año':
-                    truncDate = 'year';
-                    dateFilter = "EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)";
-                    break;
-                case 'dia':
-                default:
-                    truncDate = 'day';
-                    dateFilter = "DATE(lote.fechaCreacion) = CURRENT_DATE";
-                    break;
-            }
-            const estadisticas = await this.loteRepository
+            const gastosDia = await this.loteRepository
                 .createQueryBuilder('lote')
-                .select([
-                `DATE_TRUNC('${truncDate}', lote.fechaCreacion) AS fecha`,
-                'SUM(lote.precioCompra) AS totalCompra'
-            ])
+                .select('SUM(lote.precioCompra)', 'totalCompra')
                 .where('lote.userId = :userId', { userId: user.id })
-                .andWhere(dateFilter)
-                .groupBy('fecha')
-                .orderBy('fecha', 'DESC')
-                .getRawMany();
-            return { estadisticas };
+                .andWhere("DATE(lote.fechaCreacion) = CURRENT_DATE")
+                .getRawOne();
+            const gastosMes = await this.loteRepository
+                .createQueryBuilder('lote')
+                .select('SUM(lote.precioCompra)', 'totalCompra')
+                .where('lote.userId = :userId', { userId: user.id })
+                .andWhere("EXTRACT(MONTH FROM lote.fechaCreacion) = EXTRACT(MONTH FROM CURRENT_DATE)")
+                .andWhere("EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)")
+                .getRawOne();
+            const gastosAnio = await this.loteRepository
+                .createQueryBuilder('lote')
+                .select('SUM(lote.precioCompra)', 'totalCompra')
+                .where('lote.userId = :userId', { userId: user.id })
+                .andWhere("EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)")
+                .getRawOne();
+            return {
+                gastosDia: gastosDia?.totalCompra || 0,
+                gastosMes: gastosMes?.totalCompra || 0,
+                gastosAnio: gastosAnio?.totalCompra || 0,
+            };
         }
         catch (error) {
             this.logger.error('Error al obtener estadísticas', error.stack);

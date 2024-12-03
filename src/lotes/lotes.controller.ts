@@ -16,12 +16,10 @@ export class LotesController {
   constructor(private readonly lotesService: LotesService, private readonly productsService: ProductsService) {}
 
   @Get('estadisticas')
-  async obtenerEstadisticas(
-    @GetUser() user: User,
-    @Query('tipo') tipo: 'dia' | 'mes' | 'año' // Tipo de agrupación: día, mes, año
-  ): Promise<any> {
-    return this.lotesService.obtenerEstadisticas(user, tipo);
+  async obtenerEstadisticas(@GetUser() user: User): Promise<any> {
+    return this.lotesService.obtenerEstadisticas(user);  // Llamada al servicio para obtener todas las estadísticas
   }
+  
 
   @Post()
   async create(@Body() createLoteDto: CreateLoteDto, @GetUser() user: User): Promise<Lote> {

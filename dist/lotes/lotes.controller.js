@@ -27,8 +27,8 @@ let LotesController = class LotesController {
         this.lotesService = lotesService;
         this.productsService = productsService;
     }
-    async obtenerEstadisticas(user, tipo) {
-        return this.lotesService.obtenerEstadisticas(user, tipo);
+    async obtenerEstadisticas(user) {
+        return this.lotesService.obtenerEstadisticas(user);
     }
     async create(createLoteDto, user) {
         return this.lotesService.create(createLoteDto, user);
@@ -61,9 +61,8 @@ exports.LotesController = LotesController;
 __decorate([
     (0, common_1.Get)('estadisticas'),
     __param(0, (0, get_user_decorator_1.GetUser)()),
-    __param(1, (0, common_1.Query)('tipo')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_entity_1.User, String]),
+    __metadata("design:paramtypes", [user_entity_1.User]),
     __metadata("design:returntype", Promise)
 ], LotesController.prototype, "obtenerEstadisticas", null);
 __decorate([
