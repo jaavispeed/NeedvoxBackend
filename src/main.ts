@@ -6,13 +6,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Configuración global de CORS
-  app.enableCors({
-    origin: 'https://needvox.com',  // Permite solo este dominio
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authentication, Access-Control-Allow-Credentials, Authorization',
-    credentials: true, 
-  });
-  
+app.enableCors({
+  origin: '*',  
+  methods: ['GET', 'POST', 'PUT', 'DELETE','OPTIONS','PATCH'],  
+  allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authentication, Access-Control-Allow-Credentials, Authorization',
+  credentials: true, 
+});
 
 
   // Configuración global del prefijo de rutas
