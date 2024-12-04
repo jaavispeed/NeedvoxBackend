@@ -131,12 +131,14 @@ let LotesService = class LotesService {
             const gastosDia = await this.loteRepository
                 .createQueryBuilder('lote')
                 .select('SUM(lote.precioCompra)', 'totalCompra')
+                .addSelect('COUNT(lote.id)', 'cantidad')
                 .where('lote.userId = :userId', { userId: user.id })
                 .andWhere("DATE(lote.fechaCreacion) = CURRENT_DATE")
                 .getRawOne();
             const gastosMes = await this.loteRepository
                 .createQueryBuilder('lote')
                 .select('SUM(lote.precioCompra)', 'totalCompra')
+                .addSelect('COUNT(lote.id)', 'cantidad')
                 .where('lote.userId = :userId', { userId: user.id })
                 .andWhere("EXTRACT(MONTH FROM lote.fechaCreacion) = EXTRACT(MONTH FROM CURRENT_DATE)")
                 .andWhere("EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)")
@@ -144,13 +146,23 @@ let LotesService = class LotesService {
             const gastosAnio = await this.loteRepository
                 .createQueryBuilder('lote')
                 .select('SUM(lote.precioCompra)', 'totalCompra')
+                .addSelect('COUNT(lote.id)', 'cantidad')
                 .where('lote.userId = :userId', { userId: user.id })
                 .andWhere("EXTRACT(YEAR FROM lote.fechaCreacion) = EXTRACT(YEAR FROM CURRENT_DATE)")
                 .getRawOne();
             return {
-                gastosDia: gastosDia?.totalCompra || 0,
-                gastosMes: gastosMes?.totalCompra || 0,
-                gastosAnio: gastosAnio?.totalCompra || 0,
+                gastosDia: {
+                    totalCompra: gastosDia?.totalCompra || 0,
+                    cantidad: gastosDia?.cantidad || 0,
+                },
+                gastosMes: {
+                    totalCompra: gastosMes?.totalCompra || 0,
+                    cantidad: gastosMes?.cantidad || 0,
+                },
+                gastosAnio: {
+                    totalCompra: gastosAnio?.totalCompra || 0,
+                    cantidad: gastosAnio?.cantidad || 0,
+                },
             };
         }
         catch (error) {

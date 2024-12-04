@@ -21,8 +21,17 @@ export declare class LotesService {
     findAllByProductAndUser(productId: string, user: User): Promise<Lote[]>;
     findAllByProduct(productId: string, user: User): Promise<Lote[]>;
     obtenerEstadisticas(user: User): Promise<{
-        gastosDia: any;
-        gastosMes: any;
-        gastosAnio: any;
+        gastosDia: {
+            totalCompra: any;
+            cantidad: any;
+        };
+        gastosMes: {
+            totalCompra: any;
+            cantidad: any;
+        };
+        gastosAnio: {
+            totalCompra: any;
+            cantidad: any;
+        };
     }>;
 }
