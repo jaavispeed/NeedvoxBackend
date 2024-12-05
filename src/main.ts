@@ -7,7 +7,7 @@ async function bootstrap() {
 
   // Configuración global de CORS
 app.enableCors({
-  origin: '*',  
+  origin: ['https://needvox.com'],  
   methods: ['GET', 'POST', 'PUT', 'DELETE','OPTIONS','PATCH'],  
   allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authentication, Access-Control-Allow-Credentials, Authorization',
   credentials: true, 
