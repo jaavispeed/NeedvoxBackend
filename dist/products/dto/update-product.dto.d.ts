@@ -5,5 +5,6 @@ export declare class UpdateProductDto extends UpdateProductDto_base {
     slug?: string;
     barcode?: string;
     stockTotal?: number;
+    precioVenta?: number;
 }
 export {};

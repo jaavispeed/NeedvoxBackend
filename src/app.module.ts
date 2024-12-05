@@ -21,9 +21,8 @@ import { LotesModule } from './lotes/lotes.module';
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
       synchronize: true,
-      ssl: {
-        rejectUnauthorized: false 
-      }
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined, // Desactiva SSL localmente
+
     }),
     ProductsModule,
     CommonModule,

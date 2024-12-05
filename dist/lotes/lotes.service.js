@@ -31,25 +31,23 @@ let LotesService = class LotesService {
         if (!product) {
             throw new common_1.NotFoundException('Producto no encontrado.');
         }
-        const fechaCaducidad = createLoteDto.fechaCaducidad ? createLoteDto.fechaCaducidad : null;
+        const fechaCaducidad = createLoteDto.fechaCaducidad || null;
         const lote = this.loteRepository.create({
             ...createLoteDto,
             fechaCaducidad,
             producto: product,
             user,
         });
+        lote.precioCompra = createLoteDto.precioCompra;
         const savedLote = await this.loteRepository.save(lote);
-        const stockTotal = await this.productsService.calculateTotalStock(product.id, user);
-        product.stockTotal = stockTotal;
+        product.stockTotal = await this.productsService.calculateTotalStock(product.id, user);
         await this.productRepository.save(product);
         return savedLote;
     }
     async findAll(paginationDto, user) {
-        const { limit = 10, offset = 0 } = paginationDto;
         return await this.loteRepository.find({
             where: { user },
-            take: limit,
-            skip: offset,
+            relations: ['producto'],
         });
     }
     async findOne(id, user) {
@@ -71,7 +69,6 @@ let LotesService = class LotesService {
             lote.fechaCaducidad = updateLoteDto.fechaCaducidad;
         }
         lote.precioCompra = updateLoteDto.precioCompra ?? lote.precioCompra;
-        lote.precioVenta = updateLoteDto.precioVenta ?? lote.precioVenta;
         lote.stock = updateLoteDto.stock ?? lote.stock;
         const updatedLote = await this.loteRepository.save(lote);
         const product = lote.producto;
@@ -108,23 +105,22 @@ let LotesService = class LotesService {
                 producto: product,
                 user,
             },
+            relations: ['producto'],
         });
         console.log(`Lotes obtenidos en findAllByProductAndUser para producto ${productId}:`, lotes);
         return lotes;
     }
     async findAllByProduct(productId, user) {
-        console.log(`Buscando lotes para productId: ${productId} y userId: ${user.id}`);
-        try {
-            const lotes = await this.loteRepository.find({
-                where: { user, producto: { id: productId } },
-            });
-            console.log(`Lotes encontrados:`, lotes);
-            return lotes;
-        }
-        catch (error) {
-            console.error('Error al buscar lotes:', error);
-            throw new Error('No se pudieron encontrar los lotes.');
-        }
+        console.log(`Buscando lotes para el producto con ID: ${productId}`);
+        const lotes = await this.loteRepository.find({
+            where: {
+                producto: { id: productId },
+                user: user,
+            },
+            relations: ['producto'],
+        });
+        console.log(`Lotes encontrados:`, lotes);
+        return lotes;
     }
     async obtenerEstadisticas(user) {
         try {

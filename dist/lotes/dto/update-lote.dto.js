@@ -25,12 +25,6 @@ __decorate([
     (0, class_validator_1.IsPositive)(),
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
-], UpdateLoteDto.prototype, "precioVenta", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsPositive)(),
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
 ], UpdateLoteDto.prototype, "stock", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),

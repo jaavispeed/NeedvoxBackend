@@ -10,9 +10,6 @@ export class Lote {
   @Column({ type: 'int' }) // Cambiado a int
   precioCompra: number;
 
-  @Column({ type: 'int' }) // Cambiado a int
-  precioVenta: number;
-
   @Column()
   stock: number;
 

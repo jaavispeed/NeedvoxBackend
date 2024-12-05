@@ -7,10 +7,6 @@ export class CreateLoteDto {
 
   @IsPositive()
   @IsNumber()
-  precioVenta: number;
-
-  @IsPositive()
-  @IsNumber()
   stock: number; // Mantener este campo, ya que es importante para el lote
 
   @IsOptional() // Es opcional, no se valida si está ausente

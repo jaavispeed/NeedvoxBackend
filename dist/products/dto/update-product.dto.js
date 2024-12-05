@@ -36,4 +36,10 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateProductDto.prototype, "stockTotal", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsPositive)(),
+    __metadata("design:type", Number)
+], UpdateProductDto.prototype, "precioVenta", void 0);
 //# sourceMappingURL=update-product.dto.js.map

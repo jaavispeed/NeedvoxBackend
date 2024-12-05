@@ -52,8 +52,6 @@ let LotesController = class LotesController {
         console.log(`Buscando lotes para el producto: ${productId} y usuario: ${user.id}`);
         const lotes = await this.lotesService.findAllByProduct(productId, user);
         const stockTotal = lotes.reduce((total, lote) => total + lote.stock, 0);
-        console.log(`Stock total calculado para el producto ${productId}: ${stockTotal}`);
-        console.log(`Lotes encontrados para el producto ${productId}:`, lotes);
         return { lotes, stockTotal };
     }
 };

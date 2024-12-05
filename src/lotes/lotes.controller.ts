@@ -53,21 +53,14 @@ export class LotesController {
 
   @Get('producto/:id')
   async findAllByProduct(@Param('id') productId: string, @GetUser() user: User): Promise<{ lotes: Lote[]; stockTotal: number }> {
-      console.log(`Buscando lotes para el producto: ${productId} y usuario: ${user.id}`);
-      
-      // Llamando al servicio para obtener los lotes
-      const lotes = await this.lotesService.findAllByProduct(productId, user);
+    console.log(`Buscando lotes para el producto: ${productId} y usuario: ${user.id}`);
+    
+    const lotes = await this.lotesService.findAllByProduct(productId, user);
   
-      // Sumar el stock total de los lotes
-      const stockTotal = lotes.reduce((total, lote) => total + lote.stock, 0);
+    const stockTotal = lotes.reduce((total, lote) => total + lote.stock, 0);
   
-      // Log del stock total calculado
-      console.log(`Stock total calculado para el producto ${productId}: ${stockTotal}`);
-  
-      // Log para mostrar los lotes encontrados
-      console.log(`Lotes encontrados para el producto ${productId}:`, lotes);
-      
-      return { lotes, stockTotal };
+    return { lotes, stockTotal };
   }
+  
     
 }

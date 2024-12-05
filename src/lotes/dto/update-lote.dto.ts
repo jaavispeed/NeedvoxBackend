@@ -10,11 +10,6 @@ export class UpdateLoteDto {
   @IsOptional()
   @IsPositive()
   @IsNumber()
-  precioVenta?: number;
-
-  @IsOptional()
-  @IsPositive()
-  @IsNumber()
   stock?: number;
 
   @IsOptional()

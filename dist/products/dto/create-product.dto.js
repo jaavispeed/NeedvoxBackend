@@ -29,4 +29,9 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "barcode", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsPositive)(),
+    __metadata("design:type", Number)
+], CreateProductDto.prototype, "precioVenta", void 0);
 //# sourceMappingURL=create-product.dto.js.map

@@ -61,6 +61,10 @@ __decorate([
     __metadata("design:type", Array)
 ], Product.prototype, "lotes", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'int' }),
+    __metadata("design:type", Number)
+], Product.prototype, "precioVenta", void 0);
+__decorate([
     (0, typeorm_1.BeforeInsert)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),

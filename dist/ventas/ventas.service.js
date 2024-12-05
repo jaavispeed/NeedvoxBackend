@@ -69,14 +69,15 @@ let VentasService = class VentasService {
                     throw new common_1.NotFoundException(`No hay suficiente stock disponible para el producto ${prod.productId} en ningún lote.`);
                 }
                 console.log(`Lote seleccionado para el producto ${prod.productId}:`, loteSeleccionado);
+                const ventaPrice = product.precioVenta;
                 const productVenta = this.productVentaRepository.create({
                     product,
                     cantidad: prod.cantidad,
-                    ventaPrice: prod.ventaPrice,
+                    ventaPrice,
                     venta: venta,
                 });
                 productosVenta.push(productVenta);
-                total += prod.ventaPrice * prod.cantidad;
+                total += ventaPrice * prod.cantidad;
                 venta.cantidadTotal += prod.cantidad;
                 loteSeleccionado.stock -= prod.cantidad;
                 await this.loteRepository.save(loteSeleccionado);

@@ -30,6 +30,9 @@ export class Product {
     @OneToMany(() => Lote, (lote) => lote.producto)
     lotes: Lote[];
 
+    @Column({ type: 'int' })
+    precioVenta: number;  // Aquí definimos el precioVenta en Producto
+
     @BeforeInsert()
     checkSlugInsert() {
         this.generateSlug();  // Llama a la función para generar el slug

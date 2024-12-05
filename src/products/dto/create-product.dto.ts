@@ -12,4 +12,8 @@ export class CreateProductDto {
     @IsString()
     @IsOptional()
     barcode?: string;
+
+    @IsInt()
+    @IsPositive()
+    precioVenta: number; // Agregamos el campo precioVenta
 }

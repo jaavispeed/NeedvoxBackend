@@ -9,6 +9,7 @@ export declare class Product {
     barcode?: string;
     fechaCreacion: Date;
     lotes: Lote[];
+    precioVenta: number;
     checkSlugInsert(): void;
     checkSlugUpdate(): void;
     private generateSlug;

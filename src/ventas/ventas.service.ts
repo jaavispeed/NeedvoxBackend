@@ -33,13 +33,13 @@ export class VentasService {
 
     async create(createVentaDto: CreateVentaDto, user: User): Promise<Venta> {
         console.log('Inicio de creación de venta:', createVentaDto);
-
+    
         // Validación de metodo_pago
         const metodosValidos: ('EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')[] = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];
         if (!metodosValidos.includes(createVentaDto.metodo_pago as 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO')) {
             throw new BadRequestException(`El método de pago ${createVentaDto.metodo_pago} no es válido.`);
         }
-
+    
         // Crear la venta en la base de datos
         const venta = await this.ventaRepository.save({
             user,
@@ -48,30 +48,30 @@ export class VentasService {
             fecha: new Date(),
             metodo_pago: createVentaDto.metodo_pago,  // Asignar el metodo_pago correctamente
         });
-
+    
         console.log('Venta creada con ID:', venta.id);
-
+    
         const productosVenta: ProductVenta[] = [];
         let total = 0;
-
+    
         try {
             // Procesar los productos de la venta
             for (const prod of createVentaDto.productos) {
                 console.log('Procesando producto:', prod);
-
+    
                 const product = await this.productRepository.findOne({ where: { id: prod.productId } });
                 if (!product) {
                     throw new NotFoundException(`Producto con ID ${prod.productId} no encontrado.`);
                 }
-
+    
                 // Buscar los lotes disponibles con stock suficiente para el producto
                 const lotes = await this.loteRepository.find({
                     where: { producto: { id: prod.productId } },
                     order: { fechaCreacion: 'ASC' }, // Ordenar por fecha de creación si lo prefieres
                 });
-
+    
                 let loteSeleccionado = null;
-
+    
                 // Buscar un lote con suficiente stock
                 for (const lote of lotes) {
                     console.log(`Verificando lote ${lote.id} con stock: ${lote.stock}`);
@@ -80,45 +80,48 @@ export class VentasService {
                         break; // Se detiene en el primer lote con stock suficiente
                     }
                 }
-
+    
                 if (!loteSeleccionado) {
                     throw new NotFoundException(`No hay suficiente stock disponible para el producto ${prod.productId} en ningún lote.`);
                 }
-
+    
                 console.log(`Lote seleccionado para el producto ${prod.productId}:`, loteSeleccionado);
-
+    
+                // Aquí asignamos el precio de venta desde el producto
+                const ventaPrice = product.precioVenta;  // Tomamos el precio del producto
+    
                 // Crear la relación del producto en la venta
                 const productVenta = this.productVentaRepository.create({
                     product,
                     cantidad: prod.cantidad,
-                    ventaPrice: prod.ventaPrice,
+                    ventaPrice,  // Usamos el precio del producto
                     venta: venta,
                 });
-
+    
                 // Sumar a la lista de productos de la venta
                 productosVenta.push(productVenta);
-                total += prod.ventaPrice * prod.cantidad;  // Calcular el total de la venta
+                total += ventaPrice * prod.cantidad;  // Calcular el total de la venta
                 venta.cantidadTotal += prod.cantidad; // Acumular la cantidad total de productos
-
+    
                 // Restar del stock del lote seleccionado
                 loteSeleccionado.stock -= prod.cantidad; // Restar la cantidad vendida
                 await this.loteRepository.save(loteSeleccionado); // Guardar la actualización del lote
-
+    
                 // Actualizar el stockTotal del producto
                 const totalStock = await this.productsService.calculateTotalStock(product.id, user);
                 product.stockTotal = totalStock; // Asigna el stock total
                 await this.productRepository.save(product); // Guardar la actualización del producto
             }
-
+    
             // Guardar los productos de la venta en la base de datos
             await this.productVentaRepository.save(productosVenta);
-
+    
             // Actualizar la venta con el total y la cantidad total de productos
             venta.productos = productosVenta; // Asociar los productos a la venta
             venta.total = total; // Establecer el total de la venta
-
+    
             await this.ventaRepository.save(venta); // Guardar la venta
-
+    
             console.log('Venta guardada con éxito:', venta);
             return venta;
         } catch (error) {
@@ -126,6 +129,7 @@ export class VentasService {
             throw new InternalServerErrorException(`Error al crear la venta: ${error.message}`);
         }
     }
+    
 
 
     async update(id: string, updateVentaDto: UpdateVentaDto, user: User): Promise<{ venta: Venta }> {
