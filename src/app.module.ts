@@ -23,7 +23,8 @@ import { LotesModule } from './lotes/lotes.module';
       synchronize: true,
        ssl: {
         rejectUnauthorized: false 
-      }}),
+      }
+    }),
     ProductsModule,
     CommonModule,
     AuthModule,
